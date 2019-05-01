@@ -5,16 +5,18 @@
     <link rel="stylesheet" href="dns.css">
   </head>
   <body>
+    <div class="Interstitial Interstitial--dragon js-interstitial">
+      click to enter the dragon's den
+    </div>
     <header>
       <a href="/index.html">home</a>
     </header>
     <h1>Testing CNAMEs with a local DNS server</h1>
     <h2>Motivation</h2>
     <p>
-      You are the owner of www.ithaityson.com. Digging your website shows that it is currently configured like this.
+      You are the owner of ithaityson.com. Digging your website shows that it is currently configured like this.
     </p>
 <pre><code>;; ANSWER SECTION:
-www.ithaityson.com.	3481	IN	CNAME	ithaityson.com.
 ithaityson.com.		458	IN	A	198.71.233.184
 </code></pre>
 
@@ -33,9 +35,12 @@ prod-norcal-llp-alb-986012353.us-west-1.elb.amazonaws.com. 59 IN A 52.8.234.119
       Captain Ds corporate has built a shiny new website for you and in order to start using it they've asked you to update your DNS
       to also CNAME to captainds.momentfeed.com.
       It's easy enough to update your DNS record, but how do you verify that everything will work when you do?
-      This page summarizes how to mimic the effects of an arbitrary DNS CNAME locally.
+      Ideally you'd be able to browse the web and click links as normal but be able to see the results of the new DNS configuration.
     </p>
 
+    <p>
+      This page summarizes how to mimic the effects of an arbitrary DNS CNAME change locally.
+    </p>
     <h2>Approach</h2>
     <p>
       The first thing you might consider is to modify the /etc/hosts file. Unfortunately this can only alias domains to explicit IPs so it's not possible
@@ -61,7 +66,7 @@ prod-norcal-llp-alb-986012353.us-west-1.elb.amazonaws.com. 59 IN A 52.8.234.119
       Set up a recursive DNS server
     </h3>
     <p>
-      A recursive DNS server is what typical hosts talk to in order to leanrn the IP of a domain. It's essentially a cache that knows who to ask for more information
+      A recursive DNS server is what typical hosts talk to in order to learn the IP of a domain. It's essentially a cache that knows who to ask for more information
       in the case of a cache miss.
     </p>
 
@@ -100,7 +105,8 @@ forward-zone:
     </ol>
 
 
-    At this point a working dns server is running on localhost. Running <code>`dig www.google.com @127.0.0.1`</code> should give you a result.
+    At this point a working dns server is running on localhost. Running <code>`dig www.google.com @127.0.0.1`</code> should give you a normal result like:
+<pre><code>result here</code></pre>
 
     The next step will be where the custom CNAMEs are implemented.
 
@@ -112,7 +118,7 @@ forward-zone:
     </h3>
     <p>
       Sitting behind all of the recursives caches, an authoritative DNS server is what is responsible for providing the final information about what ip each
-      domain lives at. These are generally owned by domain registrars.
+      domain lives at. These are often owned by domain registrars.
     </p>
     <ol>
       <li>
@@ -173,49 +179,64 @@ ithaityson.com. 3600    IN  CNAME  captainds.momentfeed.com. ; the CNAME we're t
         </p>
       </li>
       <li>
-        Set up the nsd controller by running <code>`nsd-control-setup`</code>
+        Set up the nsd controller by running <code>`nsd-control-setup`</code>. This allows you to reload zone file changes with <code>`nsd-control reload`</code>
+        without having to restart nsd.
       </li>
       <li>
         Start nsd with <code>`sudo nsd -d`</code> (the d again prevents it from running in the background)
       </li>
     </ol>
 
-    to actually use it for you computer you can go into system preferences > network > advanced > dns and add 127.0.0.1 as a DNS Server in the left window.
-    hit ok and then make sure to hit "Apply" as well. Now your computer is using your local DNS!
+    <p>
+      Now there's an authoritative DNS server running on port 53530. At this point you should be able to dig directly at that port
+      and see your custom CNAME
+    </p>
+    <code>`dig ithaityson.com -p 53530 @127.0.0.1`</code>
+    produces
+<pre><code>output here</code></pre>
 
+    <p>
+      Now that that there is an authoritative DNS server for ithaityson.com, all that remains is letting Unbound know that it should use that server instead of
+      the default to resolve ithaityson.com pages.
+    </p>
 
+    <h3 id="3">Final Steps</h3>
+    <p>
+      A couple things need to be added to the unbound config. Nested under <code>server:</code> add:
+    </p>
+<pre><code>local-zone: ithaityson.com nodefault
+domain-insecure: "ithaityson.com"
+</code></pre>
 
-    now run it with  `sudo nsd -d`
+    <p>
+      then at the top level of the config add
+    </p>
 
-    now you have an authoritative name server running locally on port 535350.
-
-    at this point you should be able to dig directly at 535350 to see the effect of your cname
-
-    The next part is letting unbound know about nds.
-
-    We'll add a couple things to the config.
-
-    under the server: section add
-    <pre>
-      <code>
-local-zone: pfchangs.com nodefault
-domain-insecure: "pfchangs.com"
-      </code>
-    </pre>
-
-    then at the top level add
-
-    <pre>
-      <code>
-do-not-query-localhost: no
+<pre><code>do-not-query-localhost: no
 
 stub-zone:
-  name: "pfchangs.com"
+  name: "ithaityson.com"
   stub-addr: 127.0.0.1@53530
   stub-no-cache: yes
-      </code>
-    </pre>
+</code></pre>
 
-    restart unbound(can ctrl-c and run it again with same command from before)
+    <p>
+      After making the updates above, kill and restart unbound with the same command from before <code>`sudo unbound -d`</code> and update your
+      computer's setting to use localhost for DNS.
+      (under System Preferences > Network > Advanced > DNS).
+    </p>
+    <img src="settings.png" alt="">
+    <p>
+      Make sure to hit Ok and then Apply as well.
+
+      Now doing a regular dig should return the updated CNAME.
+      <code>`dig ithaityson.com @127.`</code>
+<pre><code>result here</code></pre>
+    </p>
+
+    <p>
+      Finally, you can visit ithaityson.com in your browser to see how your new site will look. (it won't look like anything because this is a made up example
+      and most things won't serve content to just anyone who CNAMEs to them).
+    </p>
   </body>
 </html>
