@@ -1,0 +1,29 @@
+.Interstitial
+{
+  display: flex;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding-top: 30px;
+	opacity: 1;
+	transition: all 2s;
+	transform: scale(1) rotate(0deg);
+	opacity: 1;
+  font-size: 50px;
+  font-family: "Comic Sans MS";
+  color: red;
+}
+
+.Interstitial--dragon
+{
+  background-image: url("dragon.jpg");
+}
+
+.Interstitial.is-dismissed
+{
+	transform: scale(0) rotate(720deg);
+	opacity: 0;
+}
