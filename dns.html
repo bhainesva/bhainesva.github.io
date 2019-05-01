@@ -57,7 +57,7 @@ prod-norcal-llp-alb-986012353.us-west-1.elb.amazonaws.com. 59 IN A 52.8.234.119
 
     </p>
 
-    <h3>
+    <h3 id="1">
       Set up a recursive DNS server
     </h3>
     <p>
@@ -65,82 +65,98 @@ prod-norcal-llp-alb-986012353.us-west-1.elb.amazonaws.com. 59 IN A 52.8.234.119
       in the case of a cache miss.
     </p>
 
-    Install Unbound
-    	brew install unbound
-
-    Setting up unbound.
-
-    1. Config is located in /usr/local/etc/unbound/unbound.conf
-
-    you can look through the defaults if you want but here's what we want
-
-    <pre>
-      <code>
-server:
-  username: bhaines
-  logfile: "/etc/unbound/unbound.log"  #uncomment to use logfile.
+    <ol>
+      <li>
+        <p>
+          Download the recursive DNS resolver <a href="https://nlnetlabs.nl/projects/unbound/about/">Unbound</a> with <code>`brew install unbound`</code>
+        </p>
+      </li>
+      <li>
+        Edit the default config file located at <code>/usr/local/etc/unbound/unbound.conf</code>. It's educational to read the file and more documentation
+        of the many options is available <a href="https://nlnetlabs.nl/documentation/unbound/unbound.conf/">here</a> but what we want is this:
+<pre><code>server:
+  username: &lt;YOUR USER NAME&gt;
+  logfile: "/etc/unbound/unbound.log"
   pidfile: "/etc/unbound/unbound.pid"
   # listen on all interfaces, answer queries from the local subnet.
   interface: 0.0.0.0
   interface: ::0
 
+# forwards all requests to google's dns server at 8.8.8.8
 forward-zone:
   name: "."
   forward-addr: 8.8.8.8@53
-      </code>
-    </pre>
+</code></pre>
+        <p>
+        Make sure to replace &lt;YOUR USER NAME&gt; a user name that exists on your computer. (this is the user whose permissions unbound will assume after starting)
+        </p>
+      </li>
+      <li>
+        <p>
+          start unbound with <code>`sudo unbound -d`</code>
+          the -d flag prevents it from running in the background so you can see logs and easily kill it with ctrl-c
+        </p>
+      </li>
+    </ol>
 
-    now you can run `sudo unbound -d` (the d prevents it from running in the background so you can see logs and easily kill it with ctrl-c)
 
-    at this point you have a working DNS server running on localhost. you should be able to run
-    `dig www.google.com @127.0.0.1` and get a result.
+    At this point a working dns server is running on localhost. Running <code>`dig www.google.com @127.0.0.1`</code> should give you a result.
 
-    to actually use it for you computer you can go into system preferences > network > advanced > dns and add 127.0.0.1 as a DNS Server in the left window.
-    hit ok and then make sure to hit "Apply" as well. Now your computer is using your local DNS!
+    The next step will be where the custom CNAMEs are implemented.
 
-    If you do some googling you might think that you can use local-data https://nlnetlabs.nl/documentation/unbound/unbound.conf/ to hardcode a cname within
-    your unbound conf but you would be wrong. if you read that thing you'll not it says you will need to set up a stub zone. Each stub zone has an
-    associated name server which must be authoritative (which unbound is not). basically you need to run something else to be the authoritative name serve
-    for the domain you want to modify.
+    Unbound supports a <code>local-data</code> option that allows for DNS records to be included directly in its config. Unfortunately
+    much like the hosts file CNAME records are not supported. For that we need an authoritative DNS server.
 
-    In order to set up a CNAME you have to use an "Authoritative DNS Server" we'll use NSD.
-    Install it with
-    `brew install nsd`
-
-    There's a default config in /usr/local/etc/nsd/nsd.conf.sample you can look at. we want to create a config at
-    /usr/local/etc/nsd/nsd.conf
-
-    Here's what we want.
-
-    <pre>
-      <code>
-server:
+    <h3 id="2">
+      Set up an authoritative DNS server
+    </h3>
+    <p>
+      Sitting behind all of the recursives caches, an authoritative DNS server is what is responsible for providing the final information about what ip each
+      domain lives at. These are generally owned by domain registrars.
+    </p>
+    <ol>
+      <li>
+        <p>
+          Download the authoritative DNS resolver <a href="https://nlnetlabs.nl/projects/nsd/about/">NSD</a> with <code>`brew install nsd`</code>
+        </p>
+      </li>
+      <li>
+        Create a config file at <code>/usr/local/etc/nsd/nsd.conf</code>. Again it's useful to read the default file (<code>/usr/local/etc/nsd/nsd.conf.defaul</code>
+        and <a href="https://www.nlnetlabs.nl/documentation/nsd/nsd.conf/">config options</a>), but this is what we want for now:
+<pre><code>server:
   zonesdir: "/usr/local/etc/nsd"
-  username: bhaines
+  username: &lt;YOUR USERNAME HERE&gt;
+  # Need to specify this because the default port
+  # is 53 which conflicts with Unbound
   port: 53530
 
+# this allows us to control the running NSD
+# instance with nsd-control
 remote-control:
   control-enable: yes
 
-key:
+  <!-- DOUBLE CHECK YOU ACTUALLY NEED THIS -->
+<!-- key:
   name: "sec_key"
   algorithm: hmac-md5
-  secret: "6KM6qiKfwfEpamEq72HQdA=="
+  secret: "6KM6qiKfwfEpamEq72HQdA==" -->
 
+# specifies a zone this server is responsible for
+# and where to find its configuration
+# there's such a thing as 'reverse dns' which is irrelevant
+# but is why the zone file has a .forward
 zone:
-  name: pfchangs.com
-  zonefile: pfchangs.com.forward
-      </code>
-    </pre>
+  name: ithaityson.com
+  zonefile: ithaityson.com.forward
+</code></pre>
+      </li>
+      <li>
+        Create the zonefile referenced by the config at <code>/usr/local/etc/nsd/ithaityson.com.forward</code>
+        This should be the content:
+<pre><code>$ORIGIN ithaityson.com.    ; default zone domain
+$TTL 3600               ; default time to live
 
-    we also need to set up the zone file referenced in the config. it should go in /usr/local/etc/nsd and looks like this
-
-    <pre>
-      <code>
-$ORIGIN pfchangs.com.    ; default zone domain
-$TTL 86400           ; default time to live
-
-pfchangs.com. IN SOA ns1.pfchangs.com. hostmaster.pfchangs.com. (
+ithaityson.com. IN SOA ns1.ithaityson.com. hostmaster.ithaityson.com. (
           2011010203  ; serial number
           28800       ; Refresh
           7200        ; Retry
@@ -148,12 +164,26 @@ pfchangs.com. IN SOA ns1.pfchangs.com. hostmaster.pfchangs.com. (
           86400       ; Min TTL
           )
 
-ns1.pfchangs.com.   3600    IN  A   127.0.0.1
-locations.pfchangs.com. 3600    IN  CNAME   www.nattathai.com.
-      </code>
-    </pre>
+ns1.ithaityson.com.   3600    IN  A   127.0.0.1   ; specifies the location of a nameserver who can locate ithaityson.com (our local one in this case)
+ithaityson.com. 3600    IN  CNAME  captainds.momentfeed.com. ; the CNAME we're trying to test!
+</code></pre>
+        <p>
+          More details about the zone file can format can be found <a href="http://www.zytrax.com/books/dns/ch8/">here</a>
+          and the SOA record in particular <a href="http://www.zytrax.com/books/dns/ch8/soa.html">here</a>
+        </p>
+      </li>
+      <li>
+        Set up the nsd controller by running <code>`nsd-control-setup`</code>
+      </li>
+      <li>
+        Start nsd with <code>`sudo nsd -d`</code> (the d again prevents it from running in the background)
+      </li>
+    </ol>
 
-    we want to be able to use the remote control so first run  `nsd-control-setup`
+    to actually use it for you computer you can go into system preferences > network > advanced > dns and add 127.0.0.1 as a DNS Server in the left window.
+    hit ok and then make sure to hit "Apply" as well. Now your computer is using your local DNS!
+
+
 
     now run it with  `sudo nsd -d`
 
