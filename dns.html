@@ -5,23 +5,21 @@
     <link rel="stylesheet" href="dns.css">
   </head>
   <body>
-    <div class="Interstitial Interstitial--dragon js-interstitial">
-      click to enter the dragon's den
-    </div>
     <header>
       <a href="/index.html">home</a>
     </header>
     <h1>Testing CNAMEs with a local DNS server</h1>
     <h2>Motivation</h2>
     <p>
-      You are the owner of ithaityson.com. Digging your website shows that it is currently configured like this.
+      You are the owner of www.ithaityson.com. Digging your website shows that it is currently configured like this.
     </p>
 <pre><code>;; ANSWER SECTION:
-ithaityson.com.		458	IN	A	198.71.233.184
+www.ithaityson.com.	3599	IN	CNAME	ithaityson.com.
+ithaityson.com.		119	IN	A	198.71.233.184
 </code></pre>
 
     <p>
-      No one eats at your restaurant so you've decided to franchise as a Captain Ds location. Digging locations.captainds.com we see
+      No one eats at your restaurant so you've decided to franchise as a Captain Ds location. Digging locations.captainds.com returns
     </p>
 
 <pre><code>;; ANSWER SECTION:
@@ -34,7 +32,7 @@ prod-norcal-llp-alb-986012353.us-west-1.elb.amazonaws.com. 59 IN A 52.8.234.119
     <p>
       Captain Ds corporate has built a shiny new website for you and in order to start using it they've asked you to update your DNS
       to also CNAME to captainds.momentfeed.com.
-      It's easy enough to update your DNS record, but how do you verify that everything will work when you do?
+      It's easy enough to update your DNS record, but how do you verify that everything will work before actually doing it?
       Ideally you'd be able to browse the web and click links as normal but be able to see the results of the new DNS configuration.
     </p>
 
@@ -93,7 +91,7 @@ forward-zone:
   forward-addr: 8.8.8.8@53
 </code></pre>
         <p>
-        Make sure to replace &lt;YOUR USER NAME&gt; a user name that exists on your computer. (this is the user whose permissions unbound will assume after starting)
+        Make sure to replace &lt;YOUR USER NAME&gt; with a user name that exists on your computer. (this is the user whose permissions unbound will assume after starting)
         </p>
       </li>
       <li>
@@ -105,12 +103,14 @@ forward-zone:
     </ol>
 
 
-    At this point a working dns server is running on localhost. Running <code>`dig www.google.com @127.0.0.1`</code> should give you a normal result like:
-<pre><code>result here</code></pre>
+    At this point a working dns server is running on localhost. Running <code>`dig www.google.com @127.0.0.1`</code> should give you a normal result.
+<pre><code>;; ANSWER SECTION:
+www.google.com.		191	IN	A	172.217.15.100
+</code></pre>
 
     The next step will be where the custom CNAMEs are implemented.
 
-    Unbound supports a <code>local-data</code> option that allows for DNS records to be included directly in its config. Unfortunately
+    Unbound supports a <code>local-data</code> option that allows for DNS records to be included directly in its config but
     much like the hosts file CNAME records are not supported. For that we need an authoritative DNS server.
 
     <h3 id="2">
@@ -127,7 +127,7 @@ forward-zone:
         </p>
       </li>
       <li>
-        Create a config file at <code>/usr/local/etc/nsd/nsd.conf</code>. Again it's useful to read the default file (<code>/usr/local/etc/nsd/nsd.conf.defaul</code>
+        Create a config file at <code>/usr/local/etc/nsd/nsd.conf</code>. Again it's useful to read the default file (<code>/usr/local/etc/nsd/nsd.conf.sample</code>
         and <a href="https://www.nlnetlabs.nl/documentation/nsd/nsd.conf/">config options</a>), but this is what we want for now:
 <pre><code>server:
   zonesdir: "/usr/local/etc/nsd"
@@ -141,12 +141,6 @@ forward-zone:
 remote-control:
   control-enable: yes
 
-  <!-- DOUBLE CHECK YOU ACTUALLY NEED THIS -->
-<!-- key:
-  name: "sec_key"
-  algorithm: hmac-md5
-  secret: "6KM6qiKfwfEpamEq72HQdA==" -->
-
 # specifies a zone this server is responsible for
 # and where to find its configuration
 # there's such a thing as 'reverse dns' which is irrelevant
@@ -157,8 +151,10 @@ zone:
 </code></pre>
       </li>
       <li>
-        Create the zonefile referenced by the config at <code>/usr/local/etc/nsd/ithaityson.com.forward</code>
-        This should be the content:
+        <p>
+          Create the zonefile referenced by the config at <code>/usr/local/etc/nsd/ithaityson.com.forward</code>.
+          This should be the content:
+        </p>
 <pre><code>$ORIGIN ithaityson.com.    ; default zone domain
 $TTL 3600               ; default time to live
 
@@ -171,7 +167,7 @@ ithaityson.com. IN SOA ns1.ithaityson.com. hostmaster.ithaityson.com. (
           )
 
 ns1.ithaityson.com.   3600    IN  A   127.0.0.1   ; specifies the location of a nameserver who can locate ithaityson.com (our local one in this case)
-ithaityson.com. 3600    IN  CNAME  captainds.momentfeed.com. ; the CNAME we're trying to test!
+www.ithaityson.com. 3600    IN  CNAME  captainds.momentfeed.com. ; the CNAME we're trying to test!
 </code></pre>
         <p>
           More details about the zone file can format can be found <a href="http://www.zytrax.com/books/dns/ch8/">here</a>
@@ -179,21 +175,27 @@ ithaityson.com. 3600    IN  CNAME  captainds.momentfeed.com. ; the CNAME we're t
         </p>
       </li>
       <li>
-        Set up the nsd controller by running <code>`nsd-control-setup`</code>. This allows you to reload zone file changes with <code>`nsd-control reload`</code>
-        without having to restart nsd.
+        <p>
+          Set up the nsd controller by running <code>`nsd-control-setup`</code>. This allows you to reload zone file changes with <code>`nsd-control reload`</code>
+          without having to restart nsd.
+        </p>
       </li>
       <li>
-        Start nsd with <code>`sudo nsd -d`</code> (the d again prevents it from running in the background)
+        <p>
+          Start nsd with <code>`sudo nsd -d`</code> (the d again prevents it from running in the background)
+        </p>
       </li>
     </ol>
 
     <p>
       Now there's an authoritative DNS server running on port 53530. At this point you should be able to dig directly at that port
-      and see your custom CNAME
+      and see your custom CNAME. (Note that because the authoritative server doesn't recurse this only returns the CNAME and not the final IP)
     </p>
-    <code>`dig ithaityson.com -p 53530 @127.0.0.1`</code>
-    produces
-<pre><code>output here</code></pre>
+    <code>`dig www.ithaityson.com -p 53530 @127.0.0.1`</code>
+    returns:
+<pre><code>;; ANSWER SECTION:
+www.ithaityson.com.	3600	IN	CNAME	captainds.momentfeed.com.
+</code></pre>
 
     <p>
       Now that that there is an authoritative DNS server for ithaityson.com, all that remains is letting Unbound know that it should use that server instead of
@@ -221,7 +223,7 @@ stub-zone:
 </code></pre>
 
     <p>
-      After making the updates above, kill and restart unbound with the same command from before <code>`sudo unbound -d`</code> and update your
+      After making the updates above, kill and restart unbound with the same command from before (<code>`sudo unbound -d`</code>) and update your
       computer's setting to use localhost for DNS.
       (under System Preferences > Network > Advanced > DNS).
     </p>
@@ -229,13 +231,18 @@ stub-zone:
     <p>
       Make sure to hit Ok and then Apply as well.
 
-      Now doing a regular dig should return the updated CNAME.
-      <code>`dig ithaityson.com @127.`</code>
-<pre><code>result here</code></pre>
+      Now doing a regular dig should return the full updated DNS path.
+      <code>`dig www.ithaityson.com`</code>
+<pre><code>;; ANSWER SECTION:
+www.ithaityson.com.	3600	IN	CNAME	captainds.momentfeed.com.
+captainds.momentfeed.com. 59	IN	CNAME	prod-norcal-llp-alb-986012353.us-west-1.elb.amazonaws.com.
+prod-norcal-llp-alb-986012353.us-west-1.elb.amazonaws.com. 59 IN A 52.8.234.119
+prod-norcal-llp-alb-986012353.us-west-1.elb.amazonaws.com. 59 IN A 54.193.72.95
+</code></pre>
     </p>
 
     <p>
-      Finally, you can visit ithaityson.com in your browser to see how your new site will look. (it won't look like anything because this is a made up example
+      Finally, you can visit www.ithaityson.com in your browser to see how your new site will look. (it won't look like anything because this is a made up example
       and most things won't serve content to just anyone who CNAMEs to them).
     </p>
   </body>
