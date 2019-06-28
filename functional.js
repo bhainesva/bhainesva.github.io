@@ -69,9 +69,9 @@ class Tabber {
 //////////////
 const [activateEl, deactivateEl] = (R.map(f => f('is-active')))([addClass, removeClass]);
 const getTabIndex = R.path(['dataset', 'tabIndex']);
-const tabIndexEq = R.curry((idx, el) => getTabIndex(el) === idx);
-const activateElsWithTabIndex = R.curry((els, idx) => els.filter(tabIndexEq(idx)).map(activateEl));
-const deactivateElsWithoutTabIndex = R.curry((els, idx) => els.filter((el) => !tabIndexEq(idx, el)).map(deactivateEl));
+const tabIndexEq = R.useWith(R.equals, [R.identity, getTabIndex]);
+const activateElsWithTabIndex = R.curry((els, idx) => els.filter(tabIndexEq(idx)).map(addClass('is-active')));
+const deactivateElsWithoutTabIndex = R.curry((els, idx) => els.filter((el) => !tabIndexEq(idx, el)).map(removeClass('is-active')));
 
 const initTabber = el => {
   const tabEls = [buttons, contents] = R.map(R.compose(Array.from, R.flip(qsAll)(el)))(['.js-Tabber-button', '.js-Tabber-body']);
