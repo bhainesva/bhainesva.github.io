@@ -84,8 +84,7 @@ class OOPTabber {
 //////////////
 // FP Version
 //////////////
-const activateEl = addClass('is-active');
-const deactivateEl = removeClass('is-active');
+const [activateEl, deactivateEl] = (R.map(f => f('is-active')))([addClass, removeClass]);
 const getTabIndex = R.path(['dataset', 'tabIndex']);
 const tabIndexEq = R.curry((idx, el) => getTabIndex(el) === idx);
 const activateElsWithTabIndex = R.curry((els, idx) => els.filter(tabIndexEq(idx)).map(activateEl));
