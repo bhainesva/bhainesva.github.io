@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <title>Functional Javascript</title>
+    <link rel="stylesheet" href="functional.css">
+    <link rel="stylesheet" href="Tabs.css">
+    <script src="node_modules/ramda/dist/ramda.js"></script>
+    <script src="node_modules/baconjs/dist/Bacon.js"></script>
+    <script async src="functional.js"></script>
+  </head>
+  <body>
+    <header>
+      <a href="/index.html">home</a>
+    </header>
+    <h1>Converting a UI widget to Functional javascript</h1>
+
+    <div class="Tabs js-oop-tabber">
+      <div class="Tabs-buttons">
+        <button class="Tabs-button js-Tabber-button is-active" data-tab-index="0">Tab 1</button>
+        <button class="Tabs-button js-Tabber-button" data-tab-index="1">Tab 2</button>
+        <button class="Tabs-button js-Tabber-button" data-tab-index="2">Tab 3</button>
+      </div>
+      <div class="Tabs-bodies">
+        <div class="Tabs-content js-Tabber-body is-active" data-tab-index="0">Tab Content 1</div>
+        <div class="Tabs-content js-Tabber-body" data-tab-index="1">Tab Content 2</div>
+        <div class="Tabs-content js-Tabber-body" data-tab-index="2">Tab Content 3</div>
+      </div>
+    </div>
+
+    <div class="Tabs js-fp-tabber">
+      <div class="Tabs-buttons">
+        <button class="Tabs-button js-Tabber-button is-active" data-tab-index="0">Tab 1</button>
+        <button class="Tabs-button js-Tabber-button" data-tab-index="1">Tab 2</button>
+        <button class="Tabs-button js-Tabber-button" data-tab-index="2">Tab 3</button>
+      </div>
+      <div class="Tabs-bodies">
+        <div class="Tabs-content js-Tabber-body is-active" data-tab-index="0">Tab Content 1</div>
+        <div class="Tabs-content js-Tabber-body" data-tab-index="1">Tab Content 2</div>
+        <div class="Tabs-content js-Tabber-body" data-tab-index="2">Tab Content 3</div>
+      </div>
+    </div>
+
+  </body>
+</html>

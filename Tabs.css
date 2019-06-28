@@ -1,0 +1,9 @@
+.Tabs-content
+{
+  display: none;
+}
+
+.Tabs-content.is-active
+{
+  display: block;
+}
