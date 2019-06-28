@@ -91,10 +91,11 @@ const activateElsWithTabIndex = R.curry((els, idx) => els.filter(tabIndexEq(idx)
 const deactivateElsWithoutTabIndex = R.curry((els, idx) => els.filter(R.compose(R.not, tabIndexEq(idx))).map(deactivateEl));
 
 const initTabber = el => {
-  const tabEls = [buttons, contents] = R.map(R.compose(Array.from, qsAll(R.__, el)))(['.js-Tabber-button', '.js-Tabber-body'])
+  const tabEls = [buttons, contents] = R.map(R.compose(Array.from, R.flip(qsAll)(el)))(['.js-Tabber-button', '.js-Tabber-body'])
   const activationFuncs = R.map(activateElsWithTabIndex, tabEls);
   const deactivationFuncs = R.map(deactivateElsWithoutTabIndex, tabEls);
   const handler = R.compose(R.juxt([...activationFuncs, ...deactivationFuncs]), getTabIndex)
+
   Array.from(buttons).forEach(el => el.addEventListener('click', () => handler(el)));
 }
 
