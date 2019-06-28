@@ -4,6 +4,7 @@
 const l = R.curry((tag, x) => {console.log(tag, x); return x});
 const qsAll = R.invoker(1, 'querySelectorAll');
 const qs = R.invoker(1, 'querySelector');
+const arrayFrom = x => Array.from(x);
 const addClass = R.curry((cls, el) => {
   el.classList.add(cls);
 });
@@ -91,14 +92,11 @@ const activateElsWithTabIndex = R.curry((els, idx) => els.filter(tabIndexEq(idx)
 const deactivateElsWithoutTabIndex = R.curry((els, idx) => els.filter(R.compose(R.not, tabIndexEq(idx))).map(deactivateEl));
 
 const initTabber = el => {
-  const fpButtons = Array.from(qsAll('.js-Tabber-button')(el));
-  const fpContents = Array.from(qsAll('.js-Tabber-body')(el));
-  const activateButtonByIdx = activateElsWithTabIndex(fpButtons);
-  const activateContentsByIdx = activateElsWithTabIndex(fpContents);
-  const deactivateButtonsWithoutIdx = deactivateElsWithoutTabIndex(fpButtons);
-  const deactivateContentsWithoutIdx = deactivateElsWithoutTabIndex(fpContents);
-  const handler = R.compose(R.juxt([activateButtonByIdx,activateContentsByIdx,deactivateButtonsWithoutIdx,deactivateContentsWithoutIdx]), getTabIndex)
-  Array.from(fpButtons).forEach(el => el.addEventListener('click', () => handler(el)));
+  const tabEls = [buttons, contents] = R.map(R.compose(Array.from, qsAll(R.__, el)))(['.js-Tabber-button', '.js-Tabber-body'])
+  const activationFuncs = R.map(activateElsWithTabIndex, tabEls);
+  const deactivationFuncs = R.map(deactivateElsWithoutTabIndex, tabEls);
+  const handler = R.compose(R.juxt([activateButtonsByIdx,activateContentsByIdx,deactivateButtonsWithoutIdx,deactivateContentsWithoutIdx]), getTabIndex)
+  Array.from(buttons).forEach(el => el.addEventListener('click', () => handler(el)));
 }
 
 
