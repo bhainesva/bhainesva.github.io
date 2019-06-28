@@ -7,12 +7,12 @@
   width: 75%;
 }
 
-.Tabs-content
+.Tabs-body
 {
   display: none;
 }
 
-.Tabs-content.is-active
+.Tabs-body.is-active
 {
   display: block;
 }
