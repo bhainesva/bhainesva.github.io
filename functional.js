@@ -84,8 +84,8 @@ class OOPTabber {
 //////////////
 // FP Version
 //////////////
-const activateEl = R.compose(addClass('is-active'));
-const deactivateEl = R.compose(removeClass('is-active'));
+const activateEl = addClass('is-active');
+const deactivateEl = removeClass('is-active');
 const getTabIndex = R.path(['dataset', 'tabIndex']);
 const tabIndexEq = R.curry((idx, el) => getTabIndex(el) === idx);
 const activateElsWithTabIndex = R.curry((els, idx) => els.filter(tabIndexEq(idx)).map(activateEl));
@@ -95,7 +95,7 @@ const initTabber = el => {
   const tabEls = [buttons, contents] = R.map(R.compose(Array.from, qsAll(R.__, el)))(['.js-Tabber-button', '.js-Tabber-body'])
   const activationFuncs = R.map(activateElsWithTabIndex, tabEls);
   const deactivationFuncs = R.map(deactivateElsWithoutTabIndex, tabEls);
-  const handler = R.compose(R.juxt([activateButtonsByIdx,activateContentsByIdx,deactivateButtonsWithoutIdx,deactivateContentsWithoutIdx]), getTabIndex)
+  const handler = R.compose(R.juxt([...activationFuncs, ...deactivationFuncs]), getTabIndex)
   Array.from(buttons).forEach(el => el.addEventListener('click', () => handler(el)));
 }
 
