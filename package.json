@@ -18,6 +18,7 @@
   "homepage": "https://github.com/bhainesva/bhainesva.github.io#readme",
   "dependencies": {
     "baconjs": "^3.0.5",
+    "highlight.js": "^9.15.8",
     "ramda": "^0.26.1"
   }
 }

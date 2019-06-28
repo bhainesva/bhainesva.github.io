@@ -1,44 +1,131 @@
 <!DOCTYPE html>
 <html lang="">
   <head>
-    <title>Functional Javascript</title>
+    <title>Functional Javascript Experiment</title>
     <link rel="stylesheet" href="functional.css">
     <link rel="stylesheet" href="Tabs.css">
-    <script src="node_modules/ramda/dist/ramda.js"></script>
-    <script src="node_modules/baconjs/dist/Bacon.js"></script>
+    <link rel="stylesheet" href="prism.css">
+    <script src="ramda.min.js"></script>
     <script async src="functional.js"></script>
   </head>
   <body>
+    <script src="prism.js"></script>
     <header>
       <a href="/index.html">home</a>
     </header>
-    <h1>Converting a UI widget to Functional javascript</h1>
+    <h1>OOP / Functional Tabber Implementations</h1>
 
-    <div class="Tabs js-oop-tabber">
-      <div class="Tabs-buttons">
-        <button class="Tabs-button js-Tabber-button is-active" data-tab-index="0">Tab 1</button>
-        <button class="Tabs-button js-Tabber-button" data-tab-index="1">Tab 2</button>
-        <button class="Tabs-button js-Tabber-button" data-tab-index="2">Tab 3</button>
-      </div>
-      <div class="Tabs-bodies">
-        <div class="Tabs-content js-Tabber-body is-active" data-tab-index="0">Tab Content 1</div>
-        <div class="Tabs-content js-Tabber-body" data-tab-index="1">Tab Content 2</div>
-        <div class="Tabs-content js-Tabber-body" data-tab-index="2">Tab Content 3</div>
+    <p>'Tabber' is a ui widget where a set of buttons toggle content visible in a display area, see examples below</p>
+
+    <h2>OOP Implementation</h2>
+    <div class="row">
+      <div class="Tabs js-oop-tabber">
+        <div class="Tabs-buttons">
+          <button class="Tabs-button js-Tabber-button is-active" data-tab-index="0">Tab 1</button>
+          <button class="Tabs-button js-Tabber-button" data-tab-index="1">Tab 2</button>
+          <button class="Tabs-button js-Tabber-button" data-tab-index="2">Tab 3</button>
+        </div>
+        <div class="Tabs-bodies">
+          <div class="Tabs-content js-Tabber-body is-active" data-tab-index="0">Tab Content 1</div>
+          <div class="Tabs-content js-Tabber-body" data-tab-index="1">Tab Content 2</div>
+          <div class="Tabs-content js-Tabber-body" data-tab-index="2">Tab Content 3</div>
+        </div>
       </div>
     </div>
 
-    <div class="Tabs js-fp-tabber">
-      <div class="Tabs-buttons">
-        <button class="Tabs-button js-Tabber-button is-active" data-tab-index="0">Tab 1</button>
-        <button class="Tabs-button js-Tabber-button" data-tab-index="1">Tab 2</button>
-        <button class="Tabs-button js-Tabber-button" data-tab-index="2">Tab 3</button>
-      </div>
-      <div class="Tabs-bodies">
-        <div class="Tabs-content js-Tabber-body is-active" data-tab-index="0">Tab Content 1</div>
-        <div class="Tabs-content js-Tabber-body" data-tab-index="1">Tab Content 2</div>
-        <div class="Tabs-content js-Tabber-body" data-tab-index="2">Tab Content 3</div>
+<pre><code class="language-javascript">class Tabber {
+  constructor (el) {
+    this.el = el;
+    this.tabs = [];
+
+    const buttons = this.el.querySelectorAll('.js-Tabber-button');
+    const contents = this.el.querySelectorAll('.js-Tabber-body');
+    for (const button of this.buttons) {
+      for (const content of this.contents) {
+        if (button.dataset.tabIndex === content.dataset.tabIndex) {
+          this.tabs.push({button, content});
+        }
+      }
+    }
+
+    for (const tab of this.tabs) {
+      tab.button.addEventListener('click', () => {
+        this.activateAndUpdateAll(tab);
+      });
+    }
+  }
+
+  activateTab(tab) {
+    tab.button.classList.add('is-active');
+    tab.content.classList.add('is-active');
+  }
+
+  deactivateTab(tab) {
+    tab.button.classList.remove('is-active');
+    tab.content.classList.remove('is-active');
+  }
+
+  activateAndUpdateAll(tabToActivate) {
+    for (const tab of this.tabs) {
+      if (tab !== tabToActivate) {
+        this.deactivateTab(tab);
+      }
+    }
+    this.activateTab(tabToActivate);
+  }
+}
+</code></pre>
+<p>Initialized with</p>
+<pre><code class="language-javascript">new Tabber(document.querySelector('.js-oop-tabber'));
+</code></pre>
+
+    <h2>FP Implementation</h2>
+    <div class="row">
+      <div class="Tabs js-fp-tabber">
+        <div class="Tabs-buttons">
+          <button class="Tabs-button js-Tabber-button is-active" data-tab-index="0">Tab 1</button>
+          <button class="Tabs-button js-Tabber-button" data-tab-index="1">Tab 2</button>
+          <button class="Tabs-button js-Tabber-button" data-tab-index="2">Tab 3</button>
+        </div>
+        <div class="Tabs-bodies">
+          <div class="Tabs-content js-Tabber-body is-active" data-tab-index="0">Tab Content 1</div>
+          <div class="Tabs-content js-Tabber-body" data-tab-index="1">Tab Content 2</div>
+          <div class="Tabs-content js-Tabber-body" data-tab-index="2">Tab Content 3</div>
+        </div>
       </div>
     </div>
+
+    <p>Not suggesting this is best practice, definitely went overboard on golfing it</p>
+<pre><code class="language-javascript">const [activateEl, deactivateEl] = (R.map(f => f('is-active')))([addClass, removeClass]);
+const getTabIndex = R.path(['dataset', 'tabIndex']);
+const tabIndexEq = R.curry((idx, el) => getTabIndex(el) === idx);
+const activateElsWithTabIndex = R.curry((els, idx) => els.filter(tabIndexEq(idx)).map(activateEl));
+const deactivateElsWithoutTabIndex = R.curry((els, idx) => els.filter(R.compose(R.not, tabIndexEq(idx))).map(deactivateEl));
+
+const initTabber = el => {
+  const tabEls = [buttons, contents] = R.map(R.compose(Array.from, R.flip(qsAll)(el)))(['.js-Tabber-button', '.js-Tabber-body']);
+  const toRun = R.ap([activateElsWithTabIndex, deactivateElsWithoutTabIndex], tabEls);
+  const handler = R.compose(R.juxt(toRun), getTabIndex);
+  Array.from(buttons).forEach(el => el.addEventListener('click', () => handler(el)));
+}
+</code></pre>
+
+    <p>Initialized with</p>
+<pre><code class="language-javascript">initTabber(qs('.js-fp-tabber')(document));
+</code></pre>
+
+    <h2>Appendix</h2>
+    <p>R refers to <a href="https://ramdajs.com/">Ramda</a>. I also wrote a couple general helper functions for the functional version.</p>
+
+<pre><code class="language-javascript">const qsAll = R.invoker(1, 'querySelectorAll');
+const qs = R.invoker(1, 'querySelector');
+const addClass = R.curry((cls, el) => {
+  el.classList.add(cls);
+});
+const removeClass = R.curry((cls, el) => {
+  el.classList.remove(cls);
+});
+</code></pre>
 
   </body>
 </html>

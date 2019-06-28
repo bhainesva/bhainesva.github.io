@@ -1,0 +1,12 @@
+.row
+{
+  display: flex;
+  justify-content: center;
+}
+
+pre
+{
+  background-color: #dedede;
+  padding: 10px;
+  border: 1px solid black;
+}

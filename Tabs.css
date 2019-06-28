@@ -1,3 +1,12 @@
+.Tabs
+{
+  padding: 20px;
+  margin: 20px;
+  outline: 1px solid gray;
+  font-size: 18px;
+  width: 75%;
+}
+
 .Tabs-content
 {
   display: none;
@@ -6,4 +15,28 @@
 .Tabs-content.is-active
 {
   display: block;
+}
+
+.Tabs-buttons
+{
+  margin-bottom: 10px;
+}
+
+.Tabs-button
+{
+  font-size: 14px;
+  border: 1px solid black;
+  padding: 4px;
+  background: none;
+}
+
+.Tabs-button.is-active
+{
+  background-color: rgb(236, 233, 233);
+  border-bottom: 3px solid blue;
+}
+
+.Tabs-bodies
+{
+  border: 1px solid black;
 }
