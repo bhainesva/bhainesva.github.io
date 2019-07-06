@@ -4,11 +4,8 @@ const init = (content) => content
 
 const Action = Type({});
 
-const update = (model, action) => model
+const update = (action, model) => model
 
-const view = (handler, model) => {
-  console.log("raw model: ", model);
-  return model
-}
+const view = (action$, model) => model
 
 export default {init, view, update, Action}
