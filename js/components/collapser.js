@@ -28,7 +28,7 @@ const of = (Component, args) => {
   const view = R.curry((action$, model) =>
     h('div.collapse', [
       h('button', {on: {click: [action$, Action.Toggle]}}, 'Collapse Section'),
-      h('div', {style: model.collapsed ? {height: '1px', transition: 'height 0.5s', overflow: 'hidden'} : {overflow: 'hidden'}},
+      h('div', {style: model.collapsed ? {height: '1px', overflow: 'hidden'} : {overflow: 'hidden'}},
         [
           Component.view(forwardTo(action$, Action.Modify), model.contents),
         ]

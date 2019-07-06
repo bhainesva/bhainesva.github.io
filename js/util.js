@@ -9,6 +9,7 @@ const patch = snabbdom.init([ // Init patch function with chosen modules
   require('snabbdom/modules/eventlisteners').default, // attaches event listeners
 ]);
 const h = require('snabbdom/h').default; // helper function for creating vnodes
+const toVNode = require('snabbdom/tovnode').default;
 
 const l = R.curry((tag, x) => {console.log(tag, x); return x})
 
@@ -43,4 +44,4 @@ const noFRPMounterFor = (Component) => {
   };
 }
 
-export default {patch, h, onReady, mounterFor, l}
+export default {patch, h, toVNode, onReady, mounterFor, l}
