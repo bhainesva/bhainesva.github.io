@@ -172,6 +172,12 @@ var _componentsCollapser = require('../components/collapser');
 var _componentsCollapser2 = _interopRequireDefault(_componentsCollapser);
 
 (0, _util.onReady)(function () {
+  var collapseEl = document.querySelector('.js-collapser');
+  _componentsCollapser2['default'].mount(_componentsCollapser2['default'].init(false, (0, _util.toVNode)(collapseEl.children[0])), collapseEl);
+
+  var resizeEl = document.querySelector('.js-resizer');
+  _componentsResizer2['default'].mount(_componentsResizer2['default'].init(1300, (0, _util.toVNode)(resizeEl.children[0])), resizeEl);
+
   var collapsableResizerEl = document.querySelector('.js-resize-inside-collapse');
   var collapsableResizer = _componentsCollapser2['default'].of(_componentsResizer2['default'], [1300, (0, _util.toVNode)(collapsableResizerEl.children[0])]);
   collapsableResizer.mount(collapsableResizer.init(false), collapsableResizerEl);
@@ -179,12 +185,6 @@ var _componentsCollapser2 = _interopRequireDefault(_componentsCollapser);
   var resizableCollapserEl = document.querySelector('.js-collapse-inside-resize');
   var resizableCollapser = _componentsResizer2['default'].of(_componentsCollapser2['default'], [false, (0, _util.toVNode)(resizableCollapserEl.children[0])]);
   resizableCollapser.mount(resizableCollapser.init(1300), resizableCollapserEl);
-
-  var collapseEl = document.querySelector('.js-collapser');
-  _componentsCollapser2['default'].mount(_componentsCollapser2['default'].init(false, (0, _util.toVNode)(collapseEl.children[0])), collapseEl);
-
-  var resizeEl = document.querySelector('.js-resizer');
-  _componentsResizer2['default'].mount(_componentsResizer2['default'].init(1300, (0, _util.toVNode)(resizeEl.children[0])), resizeEl);
 });
 
 },{"../components/collapser":1,"../components/resizer":3,"../util":5}],5:[function(require,module,exports){
