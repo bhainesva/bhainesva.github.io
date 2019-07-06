@@ -1,6 +1,60 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _ramda = require('ramda');
+
+var _ramda2 = _interopRequireDefault(_ramda);
+
+var _tabber = require('../tabber');
+
+var snabbdom = require('snabbdom');
+var h = require('snabbdom/h')['default'];
+
+var patch = snabbdom.init([require('snabbdom/modules/class')['default'], // makes it easy to toggle classes
+require('snabbdom/modules/props')['default'], // for setting properties on DOM elements
+require('snabbdom/modules/style')['default'], // handles styling on elements with support for animations
+require('snabbdom/modules/eventlisteners')['default']]);
+
+// attaches event listeners
+var qsAll = _ramda2['default'].invoker(1, 'querySelectorAll');
+var qs = _ramda2['default'].invoker(1, 'querySelector');
+
+var OnReady = function OnReady(cb) {
+  if (document.readyState === "complete" || document.readyState === "loaded" || document.readyState === "interactive") {
+    cb.bind(undefined)();
+  } else {
+    document.addEventListener('DOMContentLoaded', cb.bind(undefined));
+  }
+};
+
+var main = function main(initState, element, _ref) {
+  var view = _ref.view;
+  var update = _ref.update;
+
+  var newVnode = view(initState, function (event) {
+    var newState = update(initState, event);
+    main(newState, newVnode, { view: view, update: update });
+  });
+  patch(element, newVnode);
+};
+
+OnReady(function () {
+  // Init OOP Tabber
+  new _tabber.Tabber(document.querySelector('.js-oop-tabber'));
+
+  // Init FP Tabber
+  (0, _tabber.initTabber)(qs('.js-fp-tabber')(document));
+
+  // Init elm tabber
+  var initialState = _tabber.elmTabber.getStateFromDom(document.querySelector('.js-elm-tabber'));
+  main(_tabber.elmTabber.init(initialState), document.querySelector('.js-elm-tabber'), _tabber.elmTabber);
+});
+
+},{"../tabber":2,"ramda":90,"snabbdom":339,"snabbdom/h":332,"snabbdom/modules/class":335,"snabbdom/modules/eventlisteners":336,"snabbdom/modules/props":337,"snabbdom/modules/style":338}],2:[function(require,module,exports){
+'use strict';
+
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
@@ -280,61 +334,7 @@ var view = function view(state, handler) {
 var elmTabber = { view: view, getStateFromDom: getStateFromDom, init: init, update: update, Action: Action };
 exports.elmTabber = elmTabber;
 
-},{"ramda":90,"snabbdom/h":332,"union-type":363}],2:[function(require,module,exports){
-'use strict';
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-var _ramda = require('ramda');
-
-var _ramda2 = _interopRequireDefault(_ramda);
-
-var _componentsTabber = require('../components/tabber');
-
-var snabbdom = require('snabbdom');
-var h = require('snabbdom/h')['default'];
-
-var patch = snabbdom.init([require('snabbdom/modules/class')['default'], // makes it easy to toggle classes
-require('snabbdom/modules/props')['default'], // for setting properties on DOM elements
-require('snabbdom/modules/style')['default'], // handles styling on elements with support for animations
-require('snabbdom/modules/eventlisteners')['default']]);
-
-// attaches event listeners
-var qsAll = _ramda2['default'].invoker(1, 'querySelectorAll');
-var qs = _ramda2['default'].invoker(1, 'querySelector');
-
-var OnReady = function OnReady(cb) {
-  if (document.readyState === "complete" || document.readyState === "loaded" || document.readyState === "interactive") {
-    cb.bind(undefined)();
-  } else {
-    document.addEventListener('DOMContentLoaded', cb.bind(undefined));
-  }
-};
-
-var main = function main(initState, element, _ref) {
-  var view = _ref.view;
-  var update = _ref.update;
-
-  var newVnode = view(initState, function (event) {
-    var newState = update(initState, event);
-    main(newState, newVnode, { view: view, update: update });
-  });
-  patch(element, newVnode);
-};
-
-OnReady(function () {
-  // Init OOP Tabber
-  new _componentsTabber.Tabber(document.querySelector('.js-oop-tabber'));
-
-  // Init FP Tabber
-  (0, _componentsTabber.initTabber)(qs('.js-fp-tabber')(document));
-
-  // Init elm tabber
-  var initialState = _componentsTabber.elmTabber.getStateFromDom(document.querySelector('.js-elm-tabber'));
-  main(_componentsTabber.elmTabber.init(initialState), document.querySelector('.js-elm-tabber'), _componentsTabber.elmTabber);
-});
-
-},{"../components/tabber":1,"ramda":90,"snabbdom":339,"snabbdom/h":332,"snabbdom/modules/class":335,"snabbdom/modules/eventlisteners":336,"snabbdom/modules/props":337,"snabbdom/modules/style":338}],3:[function(require,module,exports){
+},{"ramda":90,"snabbdom/h":332,"union-type":363}],3:[function(require,module,exports){
 
 
 /**
@@ -13887,4 +13887,4 @@ Type.ListOf = function (T) {
 
 module.exports = Type;
 
-},{"ramda/src/compose":343,"ramda/src/curryN":344}]},{},[2]);
+},{"ramda/src/compose":343,"ramda/src/curryN":344}]},{},[1]);

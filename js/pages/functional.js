@@ -1,7 +1,7 @@
 import R from 'ramda';
 const snabbdom = require('snabbdom');
 const h = require('snabbdom/h').default;
-import { Tabber, initTabber, elmTabber } from '../components/tabber';
+import { Tabber, initTabber, elmTabber } from '../tabber';
 
 const patch = snabbdom.init([
   require('snabbdom/modules/class').default,          // makes it easy to toggle classes
