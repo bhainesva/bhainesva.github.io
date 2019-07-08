@@ -20,8 +20,7 @@ const of = (Component, args) => {
     currentStep: 0,
   })
 
-  const view = R.curry((action$, state) => {
-    return h('div.TimeTraveller', [
+  const view = R.curry((action$, state) => h('div.TimeTraveller', [
     h('div.TimeTraveller-wrapper', [
       h('div.TimeTraveller-wormhole', [
         Component.view(forwardTo(action$, Action.Step), state.history[state.currentStep])
@@ -35,7 +34,7 @@ const of = (Component, args) => {
       ]
       ),
     ])
-  ])})
+  ]));
 
 
   const update = Action.caseOn({
