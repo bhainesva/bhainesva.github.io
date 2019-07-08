@@ -1,4 +1,4 @@
-import R from 'ramda';
+import * as R from 'ramda';
 import Type from 'union-type';
 import h from 'snabbdom/h';
 

@@ -1,7 +1,6 @@
-import {toVNode, onReady} from '../util';
+import {onReady, toVNode} from '../util';
 import resizer from '../components/resizer';
-import collapser from '../components/collapser';
-
+import  collapser from '../components/collapser';
 
 onReady(() => {
   const collapseEl = document.querySelector('.js-collapser');

@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="">
+
+<head>
+  <title>UI State</title>
+  <link rel="stylesheet" href="demo.css">
+  <link rel="stylesheet" href="prism.css">
+  <script async src="dist/demo.js"></script>
+  <script async src="src/js/lib/prism.js"></script>
+</head>
+
+<body>
+  <header>
+    <a href="./index.html">home</a>
+  </header>
+  <h1>UI State</h1>
+  <button class="js-outline-mode">outline</button>
+  <h2>Introduction</h2>
+  <p>
+    Managing state of even simple applications is complicated and the source of bugs. Many developments in modern frameworks are about making it easier.
+    This page talks about a particular way of approaching the problem.
+  </p>
+
+  <h3>Examples</h3>
+  <ul>
+    <li>
+      <a href="https://locations.pfchangs.com">P.F. Chang's</a>
+    </li>
+    <li>
+      <a href="https://locations.tacobell.com">Taco Bell</a>
+    </li>
+    <li>
+      <a href="https://agents.bankerslife.com/">Bankers Life</a>
+    </li>
+  </ul>
+
+  <p>
+    These examples all demonstrate bugs introduced by state transitions for two variables each with two possible states:
+    <p class="note">
+    in theory it feels like a pretty simple situation.
+    </p>
+    <ol>
+      <li>
+        Breakpoint
+      </li>
+      <li>
+        Header Expansion Status
+      </li>
+    </ol>
+  </p>
+
+  <h3>Current Approach</h3>
+  <p class="note">
+    How do we handle these kinds of state changes, and how can it lead to bugs?
+  </p>
+  <p>
+    When an event occurs that changes the state of the application we apply a set of transformations (usually in the form of modifying classes) directly to the DOM.
+    Focusing on transitions is complicated. Consider the case with two variables. If each of those variables has two possible values that means there are four possible overall states.
+    And that means that there 12 possible transitions! This is the simplest case and that's already a lot to think about!
+
+    <div>
+      <img src="assets/transitions.png" alt="">
+    </div>
+
+    <p>
+      To make it worse, because we don't explicitly model our state, if we mess up any of these transitions, we end up completely lost.
+      It's hard to debug because we don't have a way to understand where we should be.
+    </p>
+
+    <div>
+      <img src="assets/mystery-transitions.png" alt="">
+    </div>
+  </p>
+
+  <p>
+    So to summarize, these are the key properties of our approach that create complexity.
+  </p>
+  <ul>
+    <li>Imperative</li>
+    <li>Minimal distinction between state and UI</li>
+    <li>Focus on transitions</li>
+  </ul>
+
+  <h3>Goals</h3>
+  <p>
+    Now we can identify some goals for any alternative approach.
+  </p>
+  <ul>
+    <li>Explicit model of state</li>
+    <li>Declarative - UI is a pure function of state</li>
+    <li>Explicit model of how state can change</li>
+  </ul>
+
+  <p>
+    The second point is the most complicated. We want to generate our entire component every time the state changes but it's inneficient to do `$('#app).innerHtml(newView)` every time.
+    What made this approach plausible was React's popularization of the virtual dom.
+    Every time the state changes, we can create a new virtual representation of our component, and the framework handles calculating a diff and applying the actual changes to the real DOM.
+  </p>
+
+  <h3>Solution</h3>
+  <p>
+    We're going to think of components as consisting of 4 things.
+  </p>
+  <ul>
+    <li>state: an object modelling the information needed to completely describe the component</li>
+    <li>view: a function that takes the state and returns the rendered component</li>
+    <li>actions: a list of the ways in which the state can change</li>
+    <li>update: a function that applies an action to a state</li>
+  </ul>
+
+  <p>
+    We'll use a virtual dom library to let us get away with rendering out component after every change.
+  </p>
+
+  <h2>
+    Demo
+  </h2>
+
+  <div class="Split">
+    <div>
+      We'll implement this simple counter widget. We'll use a virtual dom library, all you need to know are
+      <ul>
+        <li>h - creates a virtual dom node</li>
+        <li>patch - diffs and updates two nodes</li>
+      </ul>
+    </div>
+    <div class="u-center">
+      <div class="Counter js-counter--oop">
+        <div class="Counter-count js-count"></div>
+        <div class="Counter-buttons">
+          <button class="Counter-button js-sub">-</button>
+          <button class="Counter-button js-add">+</button>
+          <button class="Counter-button js-reset">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <h3>Reference</h3>
+  <p>
+    First a standard solution.
+  </p>
+<pre><code class="language-javascript">class Counter {
+  constructor(el) {
+    this.count;
+    this.counterEl = el.querySelector('.js-count');
+    this.addButton = el.querySelector('.js-add');
+    this.subButton = el.querySelector('.js-sub');
+    this.resetButton = el.querySelector('.js-reset');
+
+    this.setCount(0);
+
+    if (this.addButton) {
+      this.addButton.addEventListener('click', () => {
+        this.setCount(this.count + 1);
+      });
+    }
+
+    if (this.subButton) {
+      this.subButton.addEventListener('click', () => {
+        this.setCount(this.count - 1);
+      });
+    }
+
+    if (this.resetButton) {
+      this.resetButton.addEventListener('click', () => {
+        this.setCount(0);
+      });
+    }
+  }
+
+  setCount(count) {
+    this.count = count;
+    this.counterEl.innerText = count;
+  }
+}
+</code></pre>
+
+  <h3>The New World</h3>
+
+  <p>
+    Above we described four things that should make up any component, so we'll go through each of them in turn.
+  </p>
+
+  <h4>State</h4>
+  <p>
+    The current count is all we need to render the component so our state object will just have one property called 'count'. It doesn't need to be an object but it generally will be so we'll keep this for consistency.
+    We'll also define an 'init' function that returns an instance of the state.
+  </p>
+
+<pre><code class="language-javascript">// Model
+// {
+//   count: Number
+// }
+
+const init = (count=0) => ({count: count});
+</code></pre>
+
+  <h4>View</h4>
+  <p>
+    This function takes the current state and returns the html for the counter.
+  </p>
+
+  <div class="Split Split--v">
+    <div class="u-fill">
+<pre><code class="language-javascript">// View
+const view = (state) => h('div.Counter', [
+  h('div.Counter-count', state.count),
+  h('div.Counter-buttons', [
+    h('button', '-'),
+    h('button', '+'),
+    h('button', 'Reset'),
+  ]),
+]);
+</code></pre>
+    </div>
+    <div class="u-fill">
+<pre><code class="language-html">&lt;div class="Counter"&gt;
+  &lt;div class="Counter-count">${count}&lt;/div&gt;
+  &lt;div class="Counter-buttons"&gt;
+    &lt;button class="Counter-button">-&lt;/button&gt;
+    &lt;button class="Counter-button">+&lt;/button&gt;
+    &lt;button class="Counter-button">Reset&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+      </div>
+  </div>
+
+  <h4>Action</h4>
+  <p>
+    There are three things we need to be able to do to the state.
+  </p>
+  <ul>
+    <li>Increment by 1</li>
+    <li>Decrement by 1</li>
+    <li>Set to a particular value (specifically 0 for the reset button)</li>
+  </ul>
+
+  <p>
+    The syntax isn't important, you can read this as saying that 'Action' can be one of three things. Either an 'Increment' or 'Decrement' action which contains no extra information or a 'Set' action which will contain information (in the form of a Number) about the value we want.
+  </p>
+
+<pre><code class="language-javascript">const Action = Type({
+  Increment: [],
+  Decrement: [],
+  Set: [Number],
+})
+</code></pre>
+
+  <h4>Update</h4>
+  <p>
+    It's easy to define what should happen to the state given each of our actions.
+  </p>
+
+<pre><code class="language-javascript">const update = Action.caseOn({
+  Increment: (state) => ({count: state.count + 1}),
+  Decrement: (state) => ({count: state.count - 1}),
+  Set: (value, state) => ({count: value}),
+});
+</code></pre>
+
+  <h4>Connecting the Pieces</h4>
+
+  <p>
+    Now that we have our actions defined, we can updated our view to trigger the correct Action based on user input.
+
+    The view is going to be a source of actions, but it isn't responsible for handling them. We can just thrown them upwards into a handler provided by the view's caller.
+  </p>
+
+<pre><code class="language-javascript">const view = (handler, state) => h('div.Counter', [
+  h('div.Counter-count', state.count),
+  h('div.Counter-buttons', [
+    h('button.Counter-button', {on: {click: () => handler(Action.Decrement)}}, '-'),
+    h('button.Counter-button', {on: {click: () => handler(Action.Increment)}}, '+'),
+    h('button.Counter-button', {on: {click: () => handler(Action.Set(0))}}, 'Reset'),
+  ]),
+]);
+</code></pre>
+
+<p>
+  The final part, and probably trickiest, is how to start our component running.
+</p>
+
+<pre><code class="language-javascript">const main = (state, element, Component) => {
+  const newElement = Component.view((action) => {
+    const newState = Component.update(action, state);
+    main(newState, newElement, Component), state);
+  patch(element, newElement);
+}
+</code></pre>
+
+  <h4>Tada!</h4>
+  <div class="js-counter"></div>
+
+  <h2>Review</h2>
+  <p>
+    We've addressed all of our initial concerns. The ui is driven by the state and we don't have to worry about transitions.
+    But it turns out some of the decisions we made get us some other cool things for free.
+  </p>
+
+  <h3>Testability</h3>
+  <p>
+    The core update function is pure, it's trivial to make an instance of the state and apply different actions to it. How would
+    you test the class based implementation?
+  </p>
+
+  <h3>Reusability</h3>
+  <p>
+    Say we want to create a new type of counter that lets us use a text input to directly set its value. How might we do this
+    from our first solution?
+  </p>
+<pre><code class="language-javascript">class Counter {
+  constructor(el) {
+    this.count;
+    this.counterEl = el.querySelector('.js-count');
+    this.addButton = el.querySelector('.js-add');
+    this.subButton = el.querySelector('.js-sub');
+    this.resetButton = el.querySelector('.js-reset');
+    this.inputEl = el.querySelector('.js-input');
+
+    this.setCount(0);
+
+    this.inputEl.addEventListener('keydown', (e) => {
+      if (e.keyCode === '13') {
+        this.setCount(parseInt(e.target.value));
+      }
+    })
+
+    if (this.addButton) {
+      this.addButton.addEventListener('click', () => {
+        this.setCount(this.count + 1);
+      });
+    }
+
+    if (this.subButton) {
+      this.subButton.addEventListener('click', () => {
+        this.setCount(this.count - 1);
+      });
+    }
+
+    if (this.resetButton) {
+      this.resetButton.addEventListener('click', () => {
+        this.setCount(0);
+      });
+    }
+  }
+
+  setCount(count) {
+    this.count = count;
+    this.counterEl.innerText = count;
+  }
+}
+</code></pre>
+
+  <p>
+    In the our new approach we completely separated the logic of what a counter does from
+    how it's displayed which means all we have to do is write a new view! As long as we we only need the same state and respect the contract established by our Actions we
+    never have to update anything else.
+  </p>
+<pre><code class="language-javascript">const inputView = (handler, state) => h('div.Counter', [
+    h('div.Counter-count', state.count),
+    h('div.Counter-buttons', [
+      h('button.Counter-button', {on: {click: () => handler(Action.Decrement)}}, '-'),
+      h('button.Counter-button', {on: {click: () => handler(Action.Increment)}}, '+'),
+      h('input', {on: {keydown: (ev) => ifEnter(R.compose(handler, Action.Set, parseInt), targetValue(ev), ev)}}),
+    ]),
+  ]);
+</code></pre>
+
+<div class="js-counter--input"></div>
+
+
+  <h3>Time Travel</h3>
+  <p>
+    As a consequence of using immutable state, we can keep a history of all of our previous states and jump through them.
+
+    To get fancy, we can use what React calls a 'Higher Order Component'. This is a function that takes a component as input and
+    returns a new component. Because our components are structured in a specific way, we can create a function that wraps any component and
+    turns it into a time traveller.
+  </p>
+
+<pre><code class="language-javascript">// TimeTraveller.js
+const of = (Component, initArgs) => {
+  // model
+  //{
+  //  history: [child states]
+  //  currentStep: [Number]
+  //}
+  const init = () => ({
+    history: [Component.init(initArgs)],
+    currentStep: 0,
+  })
+
+  // Actions
+  const Action = Type({
+    Jump: [Number],
+    Step: [Component.Action],
+  })
+
+  // View
+  const view = R.curry((action$, state) => {
+    return h('div.Timetraveller-wormhole', [
+    h('div.Wormhole-view', [
+      Component.view(forwardTo(action$, Action.Step), state.history[state.currentStep])
+    ]),
+    h('div.Timetraveller-timeline',
+      state.history.map((s, idx) => h('button',
+        {on: {click: () => {action$(Action.Jump(idx))}}},
+        [h('span', {props: {style: idx == state.currentStep ? 'font-weight:bold' : ''}}, `Go to ${idx}`)]))
+    ),
+  ])})
+
+  // Update
+  const update = Action.caseOn({
+    Jump: (step, state) => ({...state, currentStep: step}),
+    Step: (componentAction, state) => {
+      const currentState = state.history[state.currentStep];
+      const newState = Component.update(componentAction, currentState);
+      return {
+        currentStep: state.currentStep + 1,
+        history: state.history.slice(0, state.currentStep+1).concat([newState]),
+      }
+    }
+  });
+
+  const mount = mounterFor({view, update, Action, init});
+  return {init, view, update, Action, mount}
+}
+</code></pre>
+
+<div class="js-travellingCounter"></div>
+
+<br>
+
+<div class="js-travellingInputCounter"></div>
+
+<h2>
+  Alternatives
+</h2>
+
+<p>
+  One thing to remember is that the virtual dom was a tool we used here but it was just one way of getting to the goal
+  of declarative, state driven UIs. There are other options like Svelte.
+</p>
+
+<h2>
+  Appendix
+</h2>
+<ul>
+  <li>
+    Introduction to ELM architecture w/ great examples: https://github.com/paldepind/functional-frontend-architecture
+  </li>
+  <li>
+    Detailed walkthrough of building an example app w/ the architecture: https://medium.com/@yelouafi/react-less-virtual-dom-with-snabbdom-functions-everywhere-53b672cb2fe3
+  </li>
+  <li>
+    React tutorial: https://reactjs.org/tutorial/tutorial.html
+  </li>
+  <li>
+    Svelte article about the virtual dom: https://svelte.dev/blog/virtual-dom-is-pure-overhead
+  </li>
+</ul>
+
+</body>
+</html>

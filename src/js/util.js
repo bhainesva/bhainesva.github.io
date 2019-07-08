@@ -1,4 +1,4 @@
-import R from 'ramda';
+import * as R from 'ramda';
 const flyd = require('flyd');
 const snabbdom = require('snabbdom');
 const patch = snabbdom.init([ // Init patch function with chosen modules
@@ -10,6 +10,9 @@ const patch = snabbdom.init([ // Init patch function with chosen modules
 ]);
 const h = require('snabbdom/h').default; // helper function for creating vnodes
 const toVNode = require('snabbdom/tovnode').default;
+
+const qs = R.invoker(1, 'querySelector');
+const qsAll = R.invoker(1, 'querySelectorAll');
 
 const l = R.curry((tag, x) => {console.log(tag, x); return x})
 
@@ -44,4 +47,13 @@ const noFRPMounterFor = (Component) => {
   };
 }
 
-export default {patch, h, toVNode, onReady, mounterFor, l}
+export default { patch, onReady, mounterFor, toVNode, h, l, qs};
+export {
+  qs,
+  qsAll,
+  onReady,
+  mounterFor,
+  toVNode,
+  patch,
+  h,
+};

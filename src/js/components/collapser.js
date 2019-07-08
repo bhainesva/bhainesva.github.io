@@ -1,6 +1,7 @@
-import R from 'ramda';
+import * as R from 'ramda';
 import raw from './raw';
-import {h, mounterFor} from '../util';
+import util from '../util';
+const {h, mounterFor} = util;
 const forwardTo = require('flyd-forwardto');
 const Type = require('union-type');
 
@@ -41,4 +42,5 @@ const of = (Component, args) => {
 }
 
 const defaultCollapser = of(raw);
+// export const collapser = {of, ...defaultCollapser}
 export default {of, ...defaultCollapser}

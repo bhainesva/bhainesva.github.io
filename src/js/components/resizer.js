@@ -1,6 +1,7 @@
-import R from 'ramda';
+import * as R from 'ramda';
+import util from '../util';
+const {h, mounterFor} = util;
 import raw from './raw';
-import {h, mounterFor} from '../util';
 const forwardTo = require('flyd-forwardto');
 const Type = require('union-type');
 
@@ -10,14 +11,14 @@ const of = (Component, args) => {
   //   width: Number
   //   contents: child component model
   // }
-  const init = (width, contents=Component.init(...args)) => ({
-    width,
-    contents,
-  });
-
   const Action = Type({
     SetWidth: [Number],
     Modify: [Component.Action],
+  });
+
+  const init = (width, contents=Component.init(...args)) => ({
+    width,
+    contents,
   });
 
   const update = Action.caseOn({
@@ -37,9 +38,26 @@ const of = (Component, args) => {
     ])
   );
 
+  const targetValue = (ev) => ev.target.value;
+
+  const ifEnter = R.curry(function(fn, val, ev) {
+    if (ev.keyCode === 13) return fn(val);
+  });
+
+  const inputView = R.curry((action$, model) =>
+    h('div', [
+      h('input', {on: {keydown: (ev, el) => ifEnter(R.compose(action$, Action.SetWidth, parseInt), targetValue(ev), ev)}}, 'Mobile'),
+      h('div', {style: {width: `${model.width}px`, transition: 'width 0.5s'}},
+        [
+          Component.view(forwardTo(action$, Action.Modify), model.contents),
+        ]
+      ),
+    ])
+  );
+
   const mount = mounterFor({view, update});
   return {init, view, update, Action, mount};
 }
 
 const defaultResizer = of(raw);
-export default {of, ...defaultResizer}
+export default {of, ...defaultResizer};
