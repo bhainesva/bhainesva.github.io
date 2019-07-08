@@ -1,28 +1,22 @@
+import R from 'ramda';
+import Type from 'union-type';
+import h from 'snabbdom/h';
+
 ////////////////
 // Helpers
 ////////////////
 const qsAll = R.invoker(1, 'querySelectorAll');
-const qs = R.invoker(1, 'querySelector');
 const addClass = R.curry((cls, el) => {
   el.classList.add(cls);
 });
 const removeClass = R.curry((cls, el) => {
   el.classList.remove(cls);
 });
-const OnReady = (cb) => {
-  if (document.readyState === "complete"
-       || document.readyState === "loaded"
-       || document.readyState === "interactive") {
-    cb.bind(this)();
-  } else {
-    document.addEventListener('DOMContentLoaded', cb.bind(this));
-  }
-}
 
 ////////////////
 // OOP Version
 ///////////////
-class Tabber {
+export class Tabber {
   constructor (el) {
     this.el = el;
     this.tabs = [];
@@ -67,23 +61,77 @@ class Tabber {
 //////////////
 // FP Version
 //////////////
-const [activateEl, deactivateEl] = (R.map(f => f('is-active')))([addClass, removeClass]);
+// Pure
 const getTabIndex = R.path(['dataset', 'tabIndex']);
 const tabIndexEq = R.useWith(R.equals, [R.identity, getTabIndex]);
+
+// Impure
 const activateElsWithTabIndex = R.curry((els, idx) => els.filter(tabIndexEq(idx)).map(addClass('is-active')));
 const deactivateElsWithoutTabIndex = R.curry((els, idx) => els.filter((el) => !tabIndexEq(idx, el)).map(removeClass('is-active')));
 
-const initTabber = el => {
-  const tabEls = [buttons, contents] = R.map(R.compose(Array.from, R.flip(qsAll)(el)))(['.js-Tabber-button', '.js-Tabber-body']);
+export const initTabber = el => {
+  const tabEls = R.map(R.compose(Array.from, R.flip(qsAll)(el)))(['.js-Tabber-button', '.js-Tabber-body']);
+  const [buttons, contents] = tabEls;
   const toRun = R.ap([activateElsWithTabIndex, deactivateElsWithoutTabIndex], tabEls);
   const handler = R.compose(R.juxt(toRun), getTabIndex);
   Array.from(buttons).forEach(el => el.addEventListener('click', () => handler(el)));
 }
 
-OnReady(() => {
-  // Init OOP Tabber
-  new Tabber(document.querySelector('.js-oop-tabber'));
 
-  // Init FP Tabber
-  initTabber(qs('.js-fp-tabber')(document));
+///////////
+// Elm architecture
+///////////
+
+/*
+model : {
+  active: Number,
+  buttons: [{id: Number, content: String}],
+  bodies: [{id: Number, content: String}],jj
+}
+*/
+
+const getStateFromDom = (el) => {
+  return {
+    active: Number(el.querySelector('.js-Tabber-button.is-active').dataset.tabIndex),
+    buttons: Array.from(el.querySelectorAll('.js-Tabber-button')).map(button => {return {id: Number(button.dataset.tabIndex), content: button.innerHTML}}),
+    bodies: Array.from(el.querySelectorAll('.js-Tabber-body')).map(body => {return {id: Number(body.dataset.tabIndex), content: body.innerHTML}}),
+  }
+}
+
+const Action = Type({
+  Update: [Number],
 })
+
+const init = (state) => {
+  return state || {
+    active: 0,
+    buttons: [{id: 0, content: 'Tab 1'}],
+    bodies: [{id: 0, content: 'Tab Content 1'}],
+  }
+}
+
+const update = (state, action) => {
+  return Action.case({
+    Update: (i) => {return {...state, active: i}},
+  }, action);
+}
+
+const view = (state, handler) => {
+  return h('div.Tabs', [
+    h('div.Tabs-buttons',
+      state.buttons.map(button => {
+        return h('button.Tabs-button',
+          {
+            on: {click: () => handler(Action.Update(button.id))},
+            class: {'is-active': button.id == state.active}
+          },
+          button.content)
+      })
+    ),
+    h('div.Tabs-bodies',
+      state.bodies.filter(R.compose(R.equals(state.active), R.prop('id'))).map(body => h('div', {props: {innerHTML: body.content}}))
+    )
+  ])
+}
+
+export const elmTabber = {view, getStateFromDom, init, update, Action};

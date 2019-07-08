@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "browserify js/pages/functional.js -t [ babelify --stage 1 ] --outfile functional-build.js; browserify js/pages/state.js -t [ babelify --stage 1 ] --outfile state-build.js",
+    "watch": "watchify js/pages/state.js -t babelify --outfile build.js"
   },
   "repository": {
     "type": "git",
@@ -18,7 +19,18 @@
   "homepage": "https://github.com/bhainesva/bhainesva.github.io#readme",
   "dependencies": {
     "baconjs": "^3.0.5",
+    "flyd": "^0.2.8",
+    "flyd-forwardto": "^0.0.2",
     "highlight.js": "^9.15.8",
-    "ramda": "^0.26.1"
+    "ramda": "^0.26.1",
+    "snabbdom": "^0.7.3",
+    "treis": "^2.6.0",
+    "union-type": "^0.4.1"
+  },
+  "devDependencies": {
+    "babel": "^5.2.13",
+    "babelify": "^6.0.2",
+    "browserify": "^11.0.0",
+    "watchify": "^3.3.0"
   }
 }

@@ -20,6 +20,7 @@
 .Tabs-buttons
 {
   margin-bottom: 10px;
+  display: flex;
 }
 
 .Tabs-button
@@ -28,6 +29,7 @@
   border: 1px solid black;
   padding: 4px;
   background: none;
+  margin-right: 5px;
 }
 
 .Tabs-button.is-active
