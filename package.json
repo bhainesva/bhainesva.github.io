@@ -7,7 +7,7 @@
     "dev": "webpack --mode development",
     "build": "webpack --mode production",
     "start": "webpack-dev-server --open",
-    "w": "watchify src/js/pages/demo.js -t babelify --outfile dist/demo.js"
+    "w": "watchify src/js/pages/stereogram.js -t babelify --outfile dist/build-stereogram.js"
   },
   "repository": {
     "type": "git",

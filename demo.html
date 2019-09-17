@@ -356,7 +356,12 @@ const view = (state) => h('div.Counter', [
     h('div.Counter-buttons', [
       h('button.Counter-button', {on: {click: () => handler(Action.Decrement)}}, '-'),
       h('button.Counter-button', {on: {click: () => handler(Action.Increment)}}, '+'),
-      h('input', {on: {keydown: (ev) => ifEnter(R.compose(handler, Action.Set, parseInt), targetValue(ev), ev)}}),
+      h('input', {on: {keydown: (e) => {
+        if (e.keyCode == 13) {
+          const intVal = parseInt(e.target.value);
+          handler(Action.Set(intVal))
+        }
+      }}}),
     ]),
   ]);
 </code></pre>
@@ -392,18 +397,18 @@ const of = (Component, initArgs) => {
   })
 
   // View
-  const view = R.curry((action$, state) => h('div.TimeTraveller', [
+  const view = R.curry((handler, state) => h('div.TimeTraveller', [
     h('div.TimeTraveller-wrapper',
     [
       h('div.TimeTraveller-wormhole',
       [
-        Component.view(forwardTo(action$, Action.Step), state.history[state.currentStep])
+        Component.view((componentAction) => handler(Action.Step(componentAction)), state.history[state.currentStep])
       ]),
       h('div.TimeTraveller-timeline',
       [
         h('h5', 'Timeline'),
         ...state.history.map((s, idx) => h('button',
-        {on: {click: () => {action$(Action.Jump(idx))}}}
+        {on: {click: () => {handler(Action.Jump(idx))}}}
         ,[h('span', {props: {style: idx == state.currentStep ? 'font-weight:bold' : ''}}, `Go to ${idx}`)]))
       ]),
     ])

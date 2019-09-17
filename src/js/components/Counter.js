@@ -1,4 +1,5 @@
 import * as R from 'ramda';
+import treis from 'treis';
 import util from '../util';
 const {h, mounterFor} = util;
 const Type = require('union-type');
@@ -15,11 +16,11 @@ const Action = Type({
 
 const init = (count) => ({count});
 
-const update = Action.caseOn({
+const update = treis("Counter Update: ", Action.caseOn({
   Increment: (model) => ({count: model.count + 1}),
   Decrement: (model) => ({count: model.count - 1}),
-  Set: (value, model) => ({count: value}),
-});
+  Set: (value) => ({count: value}),
+}));
 
 const view = R.curry((handler, state) => h('div.Counter', [
   h('div.Counter-count', state.count),
@@ -85,8 +86,69 @@ class OOPCounter {
   }
 }
 
+class OOPCounterBase {
+  constructor() {
+    this.count = 0
+  }
+
+  increment() {
+    this.count += 1;
+  }
+
+  decrement() {
+    this.count -= 1;
+  }
+
+  set(val) {
+    this.count = val;
+  }
+
+  getCount() {
+    return this.count;
+  }
+}
+
+class OOPNormalCounter {
+  constructor(el) {
+    this.counter = new OOPCounterBase();
+    this.counterEl = el.querySelector('.js-count');
+    this.addButton = el.querySelector('.js-add');
+    this.subButton = el.querySelector('.js-sub');
+    this.resetButton = el.querySelector('.js-reset');
+
+    this.render();
+
+    if (this.addButton) {
+      this.addButton.addEventListener('click', () => {
+        this.counter.increment();
+        this.render();
+      });
+    }
+
+    if (this.subButton) {
+      this.subButton.addEventListener('click', () => {
+        this.counter.decrement();
+        this.render();
+      });
+    }
+
+    if (this.resetButton) {
+      this.resetButton.addEventListener('click', () => {
+        this.counter.set(0);
+        this.render();
+      });
+    }
+  }
+
+  render() {
+    this.counterEl.innerText = this.counter.getCount();
+  }
+
+}
+
 export {
   OOPCounter,
+  OOPNormalCounter,
   defaultCounter,
   inputCounter
 };

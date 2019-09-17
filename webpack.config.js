@@ -5,6 +5,7 @@ module.exports = {
     index: './src/js/pages/index.js',
     functional: './src/js/pages/functional.js',
     state: './src/js/pages/state.js',
+    stereogram: './src/js/pages/stereogram.js',
     test: './src/js/pages/test.js',
     demo: './src/js/pages/demo.js',
   },

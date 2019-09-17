@@ -1,6 +1,6 @@
 import * as R from 'ramda';
 import {qs, qsAll, onReady} from '../util';
-import { defaultCounter, inputCounter, OOPCounter } from '../components/Counter';
+import { defaultCounter, inputCounter, OOPCounter, OOPNormalCounter } from '../components/Counter';
 import TimeTraveller from '../components/TimeTraveller';
 
 const qsDoc = R.flip(qs)(document);
@@ -34,7 +34,7 @@ onReady(() => {
   }
 
   const oopCounterEl = qsDoc('.js-counter--oop');
-  const oopCounter = new OOPCounter(oopCounterEl);
+  const oopCounter = new OOPNormalCounter(oopCounterEl);
 
   const counterEl = qsDoc('.js-counter')
   defaultCounter.mount(defaultCounter.init(0), counterEl);
