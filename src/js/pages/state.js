@@ -1,3 +1,6 @@
+import '../../state.html';
+import '../../state.css';
+
 import {onReady, toVNode} from '../util';
 import resizer from '../components/resizer';
 import  collapser from '../components/collapser';

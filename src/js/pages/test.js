@@ -1,3 +1,5 @@
+import '../../test.html';
+
 import util from '../util';
 const {qs, onReady} = util;
 import { defaultCounter, inputCounter } from '../components/Counter';

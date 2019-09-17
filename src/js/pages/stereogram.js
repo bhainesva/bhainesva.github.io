@@ -1,3 +1,5 @@
+import '../../stereogram.html';
+
 import { onReady } from '../util';
 import { DrawAutoStereogram } from '../autostereogram';
 

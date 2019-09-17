@@ -1,36 +1,48 @@
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const path = require('path');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+
 
 module.exports = {
+  mode: 'development',
   entry: {
     index: './src/js/pages/index.js',
-    functional: './src/js/pages/functional.js',
-    state: './src/js/pages/state.js',
-    stereogram: './src/js/pages/stereogram.js',
-    test: './src/js/pages/test.js',
+    dns: './src/js/pages/dns.js',
     demo: './src/js/pages/demo.js',
+    state: './src/js/pages/state.js',
+    functional: './src/js/pages/functional.js',
+    test: './src/js/pages/test.js',
+    stereogram: './src/js/pages/stereogram.js',
   },
+  devtool: 'inline-source-map',
+  devServer: {
+    contentBase: './dist'
+  },
+  plugins: [
+    new CleanWebpackPlugin(),
+  ],
   output: {
-    filename: 'build-[name].js',
+    filename: '[name].js',
+    path: path.resolve(__dirname, 'dist')
   },
   module: {
-		rules: [
+    rules: [
       {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: "babel-loader"
-        }
-      },
-			{
         test: /\.css$/,
-        use: [MiniCssExtractPlugin.loader, "css-loader"]
-			}
-		]
-	},
-  plugins: [
-    new MiniCssExtractPlugin({
-      filename: "[name].css",
-      chunkFilename: "[id].css"
-    })
-  ]
+        use: [
+          'style-loader',
+          'css-loader'
+        ]
+      },
+      {
+        test: /\.(html)$/,
+        use: ['file-loader?name=[name].[ext]', 'extract-loader', 'html-loader'],
+      },
+      {
+        test: /\.(png|svg|jpg|gif)$/,
+        use: [
+          'file-loader'
+        ]
+      }
+    ]
+  }
 };

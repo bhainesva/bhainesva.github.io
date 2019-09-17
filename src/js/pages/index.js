@@ -1,4 +1,6 @@
 import { onReady } from '../util';
+import '../../index.html';
+import '../../index.css';
 
 onReady(() => {
   const interstitial = document.querySelector('.js-interstitial');

@@ -1,3 +1,7 @@
+import '../../functional.html';
+import '../../functional.css';
+import '../../Tabs.css';
+
 import * as R from 'ramda';
 import { onReady, patch } from '../util';
 import { Tabber, initTabber, elmTabber } from '../tabber';

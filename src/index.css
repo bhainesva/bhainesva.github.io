@@ -19,7 +19,7 @@
 
 .Interstitial--dragon
 {
-  background-image: url("dragon.jpg");
+  background-image: url("assets/dragon.jpg");
 }
 
 .Interstitial.is-dismissed

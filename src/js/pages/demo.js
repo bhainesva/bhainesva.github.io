@@ -1,3 +1,6 @@
+import '../../demo.css';
+import '../../demo.html';
+
 import * as R from 'ramda';
 import {qs, qsAll, onReady} from '../util';
 import { defaultCounter, inputCounter, OOPCounter, OOPNormalCounter } from '../components/Counter';
