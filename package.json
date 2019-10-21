@@ -23,7 +23,7 @@
     "flyd": "^0.2.8",
     "flyd-forwardto": "^0.0.2",
     "highlight.js": "^9.15.8",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.13",
     "ramda": "^0.26.1",
     "snabbdom": "^0.7.3",
     "treis": "^2.6.0",
