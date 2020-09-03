@@ -9,6 +9,7 @@
   <script src="/jstris/datamaps.world.min.js"></script>
   <script src="/jstris/toptime.js"></script>
   <script src="/jstris/avgtime.js"></script>
+  <script src="/jstris/totalavg.js"></script>
 </head>
 
 <body>
@@ -37,6 +38,7 @@
 
     const getTopData = () => parseData(toptime);
     const getAvgData = () => parseData(avgtime);
+    const getTotalData = () => parseData(totalavg);
 
     const data = getTopData();
 
@@ -70,6 +72,7 @@
   <div>
     <button class="js-top" disabled>Top Time</button>
     <button class="js-avg">Avg. of Top 5 Times</button>
+    <button class="js-total">Avg. of Top 200 Times</button>
     <div style="display:inline-block;margin-left:40px;">
       Fast <img src="./turbo.png" style="height:10px;width:300px;" alt=""> Slow
     </div>
@@ -89,27 +92,40 @@
   <script>
     const topButton = document.querySelector('.js-top');
     const avgButton = document.querySelector('.js-avg');
+    const totalButton = document.querySelector('.js-total');
+    const buttons = [topButton, avgButton, totalButton];
+
     const updateButton = document.querySelector('.js-update');
     const minIn = document.querySelector('.js-min');
     const maxIn = document.querySelector('.js-max');
-    let topActive = true;
+    let active = 'top';
 
     topButton.addEventListener('click', () => {
-      topActive = true;
+      buttons.forEach(btn => btn.disabled = false);
       topButton.disabled = true;
-      avgButton.disabled = false;
       map.updateChoropleth(getTopData())
     });
     avgButton.addEventListener('click', () => {
-      topActive = false;
+      active = 'avg';
+      buttons.forEach(btn => btn.disabled = false);
       avgButton.disabled = true;
-      topButton.disabled = false;
       map.updateChoropleth(getAvgData())
+    });
+    totalButton.addEventListener('click', () => {
+      avtive = 'total';
+      buttons.forEach(btn => btn.disabled = false);
+      totalButton.disabled = true;
+      map.updateChoropleth(getTotalData())
     });
     updateButton.addEventListener('click', () => {
       minValue = minIn.value;
       maxValue = maxIn.value;
-      map.updateChoropleth(topActive ? getTopData() : getAvgData())
+      let data = {};
+      if (active == 'top') data = getTopData();
+      if (active === 'avg') data = getAvgData();
+      if (active === 'total') data = getTotalData();
+
+      map.updateChoropleth(data);
     });
   </script>
 </body>
