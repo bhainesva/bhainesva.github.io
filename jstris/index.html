@@ -71,9 +71,17 @@
     <button class="js-top" disabled>Top Time</button>
     <button class="js-avg">Avg. of Top 5 Times</button>
     <br><br>
-    <input class="js-min" type="text" value="15">
-    <input class="js-max" type="text" value="65">
-    <button class="js-update">Update</button>
+    Times (in seconds) outside of the range will be clamped to the min/max provided. Make the range smaller to make small differences within the range more visible at the cost of losing any distinction outside of the range.<br>
+    Min: <input class="js-min" type="text" value="15">
+    Max: <input class="js-max" type="text" value="65">
+    <button class="js-update">Update</button><br>
+
+    <br><br>
+    <b>Info:</b>
+    Data was pulled from jstris with <a href="https://sdk.apify.com/">Apify</a>.<br>
+    The map uses <a href="https://datamaps.github.io/">DataMaps</a>  / <a href="https://d3js.org/">D3</a><br>
+    The color scale is <a href="https://github.com/d3/d3-scale-chromatic#interpolateTurbo">Turbo</a><br>
+    <b>Code:</b> <a href="https://github.com/bhainesva/jstris-stats">data parsing</a>, <a href="https://github.com/bhainesva/bhainesva.github.io/blob/master/jstris/index.html">frontend</a>
   </div>
   <script>
     const topButton = document.querySelector('.js-top');
