@@ -101,6 +101,7 @@
     let active = 'top';
 
     topButton.addEventListener('click', () => {
+      active = 'top';
       buttons.forEach(btn => btn.disabled = false);
       topButton.disabled = true;
       map.updateChoropleth(getTopData())
@@ -112,7 +113,7 @@
       map.updateChoropleth(getAvgData())
     });
     totalButton.addEventListener('click', () => {
-      avtive = 'total';
+      active = 'total';
       buttons.forEach(btn => btn.disabled = false);
       totalButton.disabled = true;
       map.updateChoropleth(getTotalData())
@@ -120,8 +121,9 @@
     updateButton.addEventListener('click', () => {
       minValue = minIn.value;
       maxValue = maxIn.value;
+      console.log(active);
       let data = {};
-      if (active == 'top') data = getTopData();
+      if (active === 'top') data = getTopData();
       if (active === 'avg') data = getAvgData();
       if (active === 'total') data = getTotalData();
 
