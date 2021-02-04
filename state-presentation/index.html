@@ -1,0 +1,319 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reset.css">
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/Counter.css">
+		<link rel="stylesheet" href="css/theme/black.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/monokai.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h1>Managing State</h1>
+
+					<aside class="notes" data-markdown>
+						- It's hard.
+						- It's the source of a lot of bugs. A lot of modern js frameworks kind of revolve around how this problem is addressed.
+					</aside>
+				</section>
+				<section>
+				<h3>Examples</h3>
+				<ul>
+					<li>
+						<a href="https://locations.tacobell.com">Taco Bell</a>
+					</li>
+					<li>
+						<a href="https://agents.farmers.com">Farmers</a>
+					</li>
+					<li>
+						<a href="http://locations.pfchangs.com">P.F. Chang's</a>
+					</li>
+					<aside class="notes" data-markdown>
+						- not major bugs, not trying to call things out
+						- demonstrates that it can happen to our biggest sites
+						- each is a result of transitions of two state variables each w/ two possible values
+							- breakpoint
+							- header collapse status
+						- only two variables, should be simple, but we consistently see bugs
+					</aside>
+				</ul>
+				</section>
+
+				<section>
+					<section>
+						<h3>Current Approach</h3>
+						<aside class="notes" data-markdown>
+								- How do we handle these kinds of state changes, and how can it lead to bugs?
+						</aside>
+					</section>
+
+					<section>
+						<p>Imperative</p>
+						<p class="fragment">Event handlers describe explicit transformations to apply to the DOM</p>
+						<aside class="notes" data-markdown>
+								- generally toggling classes
+						</aside>
+					</section>
+
+					<section>
+						<p>
+							Transitions are hard
+						</p>
+						<img src="lib/transitions.png" alt="">
+
+						<aside class="notes" data-markdown>
+								- two variables w/ two states each -> 4 states -> 12 transitions
+						</aside>
+					</section>
+
+					<section>
+						<img src="lib/mystery-transitions.png" alt="">
+
+						<aside class="notes" data-markdown>
+								- if we mess up one, we can end up lost
+						</aside>
+					</section>
+
+					<section>
+						<h4>Summary</h4>
+						<ul>
+							<li>Imperative - focus on transitions</li>
+							<li>Minimal distinction between state and UI</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<h3>New Approach</h3>
+					<p class="fragment">Declarative - UI as a pure function of state</p>
+					<ul class="fragment">
+						<li>Explicit model of state</li>
+					</ul>
+
+					<aside class="notes" data-markdown>
+							- these aren't necessary decisions
+					</aside>
+				</section>
+
+				<section>
+					<h3>
+						Questions:
+					</h3>
+					<ul>
+						<li class="fragment">
+							How do we change the state
+							<ul>
+								<li class="fragment">
+									list of defined actions
+								</li>
+							</ul>
+						</li>
+						<li class="fragment">
+							How do we update the view when the state changes
+							<ul>
+								<li class="fragment">
+									virtual dom
+								</li>
+							</ul>
+						</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3>Component Model</h3>
+					<pre><code class="language-javascript">{state, view, actions, update}</code></pre>
+					<ul>
+						<li class="fragment">state: model of information needed to completely describe the component</li>
+						<li class="fragment">view: (state) => rendered component</li>
+						<li class="fragment">actions: list of the ways in which state can change</li>
+						<li class="fragment">update: (action, state) => new state</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Demo</h2>
+					<div class="Split Split--v">
+						<div class="u-center">
+							<div class="Counter js-counter--oop">
+								<div class="Counter-count js-count"></div>
+								<div class="Counter-buttons">
+									<button class="Counter-button js-sub">-</button>
+									<button class="Counter-button js-add">+</button>
+									<button class="Counter-button js-reset">Reset</button>
+								</div>
+							</div>
+						</div>
+						<div>
+							<p class="fragment">Virtual DOM</p>
+							<ul class="fragment">
+								<li>h - create a virtual element</li>
+								<li>patch - diff and update elements</li>
+							</ul>
+						</div>
+					</div>
+
+					<aside class="notes" data-markdown>
+						- summarize vdom, it's what allows us to rerender things
+						- there are other options but this is by far the most popular
+					</aside>
+				</section>
+
+				<section>
+					<h3>Standard Implementation</h3>
+					<pre class="stretch"><code class="language-javascript">class Counter {
+  constructor(el) {
+    this.count;
+    this.counterEl = el.querySelector('.js-count');
+    this.addButton = el.querySelector('.js-add');
+    this.subButton = el.querySelector('.js-sub');
+    this.resetButton = el.querySelector('.js-reset');
+
+    this.setCount(0);
+
+    this.addButton.addEventListener('click', () => {
+      this.setCount(this.count + 1);
+    });
+
+    this.subButton.addEventListener('click', () => {
+      this.setCount(this.count - 1);
+    });
+
+    this.resetButton.addEventListener('click', () => {
+      this.setCount(0);
+    });
+  }
+
+  setCount(count) {
+    this.count = count;
+    this.counterEl.innerText = count;
+  }
+}</code></pre>
+				</section>
+
+				<section>
+					<section>
+						<h3>New Approach</h3>
+					</section>
+
+					<section>
+						<h4>State</h4>
+						<pre><code class="language-javascript">// Model
+// {
+//   count: Number
+// }
+
+const init = (count) => ({count: count});</code></pre>
+						<aside class="notes" data-markdown>
+							- just need current count
+							- using an object for consistency
+							- init helper
+						</aside>
+					</section>
+
+					<section>
+						<h4>View</h4>
+						<div class="Split Split--h">
+<pre><code class="language-javascript">const view = (state) => h('div.Counter', [
+  h('div.Counter-count', state.count),
+  h('div.Counter-buttons', [
+    h('button.Counter-button', '-'),
+    h('button.Counter-button', '+'),
+    h('button.Counter-button', 'Reset'),
+  ]),
+]);</code></pre>
+<pre><code>&lt;div class="Counter"&gt;
+  &lt;div class="Counter-count">${count}&lt;/div&gt;
+  &lt;div class="Counter-buttons"&gt;
+    &lt;button class="Counter-button">-&lt;/button&gt;
+    &lt;button class="Counter-button">+&lt;/button&gt;
+    &lt;button class="Counter-button">Reset&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+						</div>
+					</section>
+
+					<section>
+						<h4>Actions</h4>
+						<pre><code class="language-javascript">const Action = Type({
+	Increment: [],
+	Decrement: [],
+	Set: [Number],
+});</code></pre>
+					</section>
+
+					<section>
+						<h4>Update</h4>
+						<pre><code class="language-javascript">const update = Action.caseOn({
+	Increment: (state) => ({count: state.count + 1}),
+	Decrement: (state) => ({count: state.count - 1}),
+	Set: (value, state) => ({count: value}),
+});</code></pre>
+					</section>
+
+					<section>
+						<h4>Putting it Together</h4>
+						<div class="stretch">
+<pre><code class="language-javascript">const view = (handler, state) => h('div.Counter', [
+  h('div.Counter-count', state.count),
+  h('div.Counter-buttons', [
+    h('button.Counter-button', {on: {click: () => handler(Action.Decrement)}}, '-'),
+    h('button.Counter-button', {on: {click: () => handler(Action.Increment)}}, '+'),
+    h('button.Counter-button', {on: {click: () => handler(Action.Set(0))}}, 'Reset'),
+  ]),
+]);
+</code></pre>
+<pre class="fragment"><code class="language-javascript">const run = (state, element, Component) => {
+  const newElement = Component.view((action) => {
+    const newState = Component.update(action, state);
+    run(newState, newElement, Component)
+  }, state);
+  patch(element, newElement);
+}
+</code></pre>
+						</div>
+					</section>
+				</section>
+
+				<section>
+					<h2>Review</h2>
+				</section>
+			</div>
+		</div>
+
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+				hash: true,
+				width: 1200,
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'customjs/util.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true }
+				]
+			});
+		</script>
+	</body>
+</html>

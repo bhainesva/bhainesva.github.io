@@ -1,0 +1,125 @@
+.u-flex {
+  display: flex;
+}
+
+.u-hideAll {
+  visibility: hidden;
+}
+
+.u-fill {
+  height: 100%;
+  width: 100%;
+}
+
+.u-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.Split {
+  display: flex;
+}
+
+.Split.Split--v > *:not(:last-child) {
+  padding-right: 8px;
+}
+
+.Split.Split--v > *:not(:first-child) {
+  padding-left: 8px;
+}
+
+.Split--h {
+  flex-direction: column;
+}
+
+.Split > * {
+  flex-basis: 50%;
+}
+
+.Split > * {
+  flex-basis: 50%;
+}
+
+.Counter {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.Counter-count
+{
+  height: 40px;
+  font-size: 2rem;
+  text-align: right;
+  background-color: #252525;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  color: white;
+  border: none;
+  padding-right: 20px;
+  padding-left: 10px;
+}
+
+.Counter-buttons
+{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.Counter-button
+{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-basis: 0%;
+  height: 40px;
+  background-color: #fff;
+  border-radius: 3px;
+  border: 1px solid #c4c4c4;
+  font-size: 1rem;
+  color: #333;
+  background-image: linear-gradient(to bottom,transparent,transparent 50%,rgba(0,0,0,.04));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.05), inset 0 1px 0 0 rgba(255,255,255,.45), inset 0 -1px 0 0 rgba(255,255,255,.15), 0 1px 0 0 rgba(255,255,255,.15);
+  text-shadow: 0 1px rgba(255,255,255,.4);
+}
+
+.Counter-button:hover {
+  background-color: #eaeaea;
+}
+
+.Counter-button:focus {
+  outline: none;
+}
+
+.Counter-button:active {
+  background-color: #cacaca;
+}
+
+.TimeTraveller {
+  color: white;
+  position: relative;
+  width: 100%;
+}
+
+.TimeTraveller-wormhole,
+.TimeTraveller-timeline {
+  width: 50%;
+  padding: 25px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.TimeTraveller-timeline {
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.TimeTraveller-wrapper {
+  background-color: lightsteelblue;
+  min-height: 300px;
+  width: 100%;
+  display: flex;
+}
