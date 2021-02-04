@@ -1,0 +1,288 @@
+<h1 id="composable-process-transformations">Composable Process Transformations</h1>
+<h2 id="overview">Overview</h2>
+<p>This article will look at how we can abstract transformation processes using transducers.
+It will cover what transducers are, their motivation, and their application in an example case.</p>
+<h3 id="pre-requisites">Pre-requisites</h3>
+<p>Familiarity with the concept of higher order functions, function composition, map/filter/reduce.
+Familiarity with ES6 spread syntax, arrow functions.</p>
+<h3 id="syntax">Syntax</h3>
+<p>The first two parts are plain javascript, with the assumption of:</p>
+<ul>
+<li>a function called <code>compose</code> used for function composition</li>
+<li>an implementation of <code>reduce</code> with arguments <code>(reducer, initialValue, input)</code>, as opposed to javascript&#39;s normal <code>Array.reduce(reducer, initialValue)</code> implementation</li>
+</ul>
+<p>In part 3 we also assume that the <code>reduce</code> implementation supports early exit by returning a value wrapped with a special <code>reduced</code> function. (<a href="https://ramdajs.com/">ramda</a> is a specific implementation like this)</p>
+<h2 id="part-1-problem-statement">Part 1: Problem Statement</h2>
+<p>A core idea of functional programming is the building up of complex programs through composition of simpler functions. A common type of program is one that transforms input data of a particular form into output through a succession of steps, where each step takes an input and integrates it into some result (the generalization of this type of step transformation is <code>reduce</code>). In this context, two of the fundamental tools of functional programming which are frequently used are the functions <code>map</code> and <code>filter</code>.</p>
+<p>These functions abstract two different types of transformations and allow us to concisely express processes that combine these transformations. For example, to find the odd numbers among the first five squares we could write:
+<code>[1, 2, 3, 4, 5].map(x =&gt; x*x).filter(x % 2 == 1)</code>.</p>
+<p>However, there are some limitations to these functions:</p>
+<ol>
+<li><p>They know too much</p>
+<p><code>map</code> and <code>filter</code> are implemented for specific types, and their outputs are implied by their input type. If we call <code>Array.map</code> we get an array as output. If we want to <code>map</code> over something else (a string, stream, channel, collection, etc.) we need to implement <code>map</code> again. If we want to map from one type to a different type, we need yet another custom <code>map</code> implementation.</p>
+</li>
+<li><p>They can&#39;t be directly composed</p>
+<p>Given a collection of mapping functions {f<sub>1</sub>, f<sub>2</sub>, f<sub>3</sub>, ...} we can combine them into one map call with <code>array.map(compose(f<sub>1</sub>, f<sub>2</sub>, f<sub>3</sub>, ...))</code>, and similarly with a collection of predicates and <code>filter</code>. However, there&#39;s no way to directly compose a mapping transformation with a filtering transformation. This leads to situations like our odd squares example where we call <code>map</code> and <code>filter</code> in succession. Doing this creates intermediate data structures which can be inefficient.</p>
+</li>
+</ol>
+<p>Given these flaws, we can describe properties of a solution we&#39;re looking for. We would like to develop &#39;an abstraction of a transformative process&#39; that captures the essence of mapping/filtering (and potentially other transformations). We want to end up with a composable &#39;unit of transformation.&#39; Its composability implies that it shouldn&#39;t care about the source of its inputs or the type of its eventual outputs.</p>
+<h2 id="part-2-solution">Part 2: Solution</h2>
+<p>As mentioned above, the generalization of the type of step based transformations we&#39;re looking at is <code>reduce</code>. <code>reduce</code> takes an input source, a &#39;step&#39; function, and an initial value. The step function takes a result, an item from the input, and produces a new result. <code>reduce</code> repeatedly calls the step function using an item from the input and the result of the previous step (or the initial value for the first invokation).</p>
+<p>We can implement <code>map</code> and <code>filter</code> using reduce:</p>
+<pre><code class="lang-javascript"><span class="hljs-keyword">const</span> mapStepFunction = <span class="hljs-function"><span class="hljs-params">f</span> =&gt;</span> (result, item) =&gt; {
+  <span class="hljs-keyword">const</span> newValue = f(item);
+  result.push(newValue);
+  <span class="hljs-keyword">return</span> result;
+}
+<span class="hljs-keyword">const</span> map = <span class="hljs-function">(<span class="hljs-params">arr, f</span>) =&gt;</span> reduce(mapStepFunction(f), [], arr);
+
+<span class="hljs-keyword">const</span> filterStepFunction = <span class="hljs-function"><span class="hljs-params">p</span> =&gt;</span> (result, item) =&gt; {
+  <span class="hljs-keyword">const</span> keep = p(item);
+  <span class="hljs-keyword">if</span> (keep) result.push(item);
+  <span class="hljs-keyword">return</span> result;
+}
+<span class="hljs-keyword">const</span> filter = <span class="hljs-function">(<span class="hljs-params">arr, p</span>) =&gt;</span> reduce(filterStepFunction(p), [], arr);
+</code></pre>
+<p>This implementation lets us see more clearly the things shared by <code>map</code>/<code>filter</code> and the parts of their implementation that are problematic. Each of them takes an input, uses it in some way, then integrates it into the result (or chooses not to in the case of filter). What we would like to avoid in our unit of transformation is any specific knowledge / manipulation of the <code>result</code>, specifically the <code>result.push</code> in these examples.</p>
+<p>One way to do this is to think of the final result building as a separate step of the transformation, distinct from the mapping step. We can extract it as a step function that is passed in as an argument which we can then defer to.</p>
+<pre><code class="lang-js"><span class="hljs-keyword">const</span> getMappingTransformation = <span class="hljs-function"><span class="hljs-params">f</span> =&gt;</span> step =&gt; <span class="hljs-function">(<span class="hljs-params">result, item</span>) =&gt;</span> {
+  <span class="hljs-keyword">const</span> newValue = f(item);
+  <span class="hljs-keyword">return</span> step(result, newValue);
+}
+</code></pre>
+<p>The result of calling <code>getMappingTransformation</code> with a specific mapping function, for example <code>getMappingTransformation(x =&gt; x * x)</code> is a new function which takes a step function as input and produces a modified step function as output. This type of function is called a transducer, and is our unit of transformation. Transducers modify step/reducing functions. Transducers avoid directly knowledge of <code>result</code> by deferring to their step function parameter, and because their inputs and outputs have the same type (a step function), they&#39;re directly composable.</p>
+<p>For completeness, we can do the same thing with <code>filter</code></p>
+<pre><code class="lang-js"><span class="hljs-keyword">const</span> getFilterTransducer = <span class="hljs-function"><span class="hljs-params">p</span> =&gt;</span> step =&gt; <span class="hljs-function">(<span class="hljs-params">result, item</span>) =&gt;</span> {
+  <span class="hljs-keyword">const</span> keep = p(item);
+  <span class="hljs-keyword">if</span> (keep) {
+    <span class="hljs-keyword">return</span> step(result, item);
+  }
+  <span class="hljs-keyword">return</span> result;
+}
+</code></pre>
+<h3 id="-a-id-usage-usage-a-"><a id="usage">Usage</a></h3>
+<p>So what do we have to do to actually use these transducers? We need</p>
+<ol>
+<li>A transducer</li>
+<li>The final step function which is responsible for building the output, and is passed to the transducer</li>
+<li>An input source</li>
+<li>An initial value</li>
+</ol>
+<p>We can implement a helper function called <code>transduce</code> like this:</p>
+<pre><code class="lang-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">transduce</span>(</span>transducer, <span class="hljs-keyword">step</span>, init, input) {
+  <span class="hljs-keyword">const</span> transformedStep = transducer(<span class="hljs-keyword">step</span>);
+  <span class="hljs-keyword">return</span> reduce(transformedStep, init, input)
+}
+</code></pre>
+<p><strong>note:</strong> It&#39;s simple enough to seem potentially pointless. The point is that transducers can be stateful. It is not necessarily safe to reuse <code>transformedStep</code>. This construction prevents accidental reuse of a &#39;stale&#39; step function. We&#39;ll see an example of a stateful transducer later.</p>
+<p>Returning to our original example of getting the odd numbers in the first five squares, we can implement it like this:</p>
+<pre><code class="lang-js"><span class="hljs-keyword">const</span> squareMapTransducer = step =&gt; (<span class="hljs-literal">result</span>, item) =&gt; {
+  <span class="hljs-keyword">const</span> square = item * item;
+  <span class="hljs-keyword">return</span> step(<span class="hljs-literal">result</span>, square);
+}
+
+<span class="hljs-keyword">const</span> oddFilterTransducer = step =&gt; (<span class="hljs-literal">result</span>, item) =&gt; {
+  <span class="hljs-keyword">if</span> (item % <span class="hljs-number">2</span> == <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span> <span class="hljs-literal">result</span>;
+  <span class="hljs-keyword">return</span> step(<span class="hljs-literal">result</span>, item);
+}
+
+transduce(
+  compose(squareMapTransducer, oddFilterTransducer),
+  (<span class="hljs-literal">result</span>, item) =&gt; [...<span class="hljs-literal">result</span>, item],
+  [],
+  [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>]
+);
+// <span class="hljs-type">Out</span>: [<span class="hljs-number">1</span>, <span class="hljs-number">9</span>, <span class="hljs-number">25</span>]
+</code></pre>
+<p><strong>note:</strong> we could also have used our <code>getFilterTransducer</code>/<code>getMapTransducer</code> helpers, but hopefully this more direct implementation makes it easier to conceptualize a transducer as a function that modifies the behavior of a step function</p>
+<h2 id="part-3-extended-example">Part 3: Extended Example</h2>
+<p>We are given a set of instructions like this:</p>
+<pre><code class="lang-js">const instructions = [
+  [<span class="hljs-string">'acc'</span>, <span class="hljs-number">2</span>],
+  [<span class="hljs-string">'nop'</span>, <span class="hljs-number">2</span>],
+  [<span class="hljs-string">'jmp'</span>, <span class="hljs-number">-1</span>],
+  [<span class="hljs-string">'nop'</span>, <span class="hljs-number">0</span>],
+  [<span class="hljs-string">'acc'</span>, <span class="hljs-number">-1</span>],
+]
+</code></pre>
+<p>Each instruction consists of an operation (<code>acc, jmp, or nop</code>) and a numeric argument.</p>
+<ul>
+<li>acc increases or decreases a single global value called the accumulator by the value given in the argument. For example, acc +7 would increase the accumulator by 7. The accumulator starts at 0. After an acc instruction, the instruction immediately below it is executed next.</li>
+<li>jmp jumps to a new instruction relative to itself. The next instruction to execute is found using the argument as an offset from the jmp instruction; for example, jmp +2 would skip the next instruction, jmp +1 would continue to the instruction immediately below it, and jmp -20 would cause the instruction 20 lines above to be executed next.</li>
+<li>nop stands for No OPeration - it does nothing. The instruction immediately below it is executed next.</li>
+</ul>
+<p>This particular set of instructions produces an infinite loop when executed. Our goal is to write a program that can execute these instructions and can also detect infinite loops. We should halt execution and output the value of the accumulator before any instruction is executed for a second time (indicated the start of loop).</p>
+<p>Our program will have an instruction pointer (<code>ip</code>) variable for keeping track of the index of the instruction to be executed and an accumulator variable <code>acc</code>.</p>
+<p>Here is a possible solution:</p>
+<details>
+<summary>Expand Code</summary>
+
+<code>js
+function findLoop(instructions) {
+  const seenIPs = new Set();
+  let ip = 0;
+  let acc = 0;
+  let i = 0;
+  while (true) {
+    // -------- Debug helpers ---------
+    // 1. We don&#39;t want to induce an infinite loop as we&#39;re testing
+    // before the loop detection is implemented, so manually
+    // break after 10 iterations
+    // i += 1;
+    // if (i &gt; 10) {
+    //   return;
+    // }
+
+    // 2. Log each iteration so we can inspect the processor as it runs
+    // console.log(&quot;ip: &quot;, ip, &quot;acc: &quot;, acc);
+
+    if (ip &gt; instructions.length) {
+      console.log(&quot;terminated normally!&quot;);
+    }
+
+    const [op, arg] = instructions[ip];
+    if (op === &#39;nop&#39;) ip += 1;
+    if (op === &#39;acc&#39;) {
+        ip += 1;
+        acc += arg;
+    }
+    if (op === &#39;jmp&#39;) {
+      ip += arg;
+    }
+    if (seenIPs.has(ip)) {
+      console.log(&quot;Found a loop, acc value is: &quot;, acc);
+      return;
+    }
+  }
+}</code>
+</details>
+<br />
+
+
+
+
+This solution works, but there are a lot of separate things mingling in this one function.
+1. The core operation of the instruction processor, reading instructions and modifying the processor&#39;s state
+2. Keeping track of seen states and aborting the process when we see a repeat
+2. Logging
+3. Breaking out at 10
+
+Most of these things can be defined without reference to the core problem of interpreting instructions and it would be nice if we could encapsulate each of them in their own function. That way we would be able turn them on and off easily, and reuse them in other contexts if we&#39;d like.
+
+So let&#39;s think about the problem as a process of transformations and approach a solution using transducers.
+
+Referring to the <a href="#usage">parameters</a> of the <code>transduce</code> function described earlier, first we&#39;ll identify the base step function.
+
+Storing the state of our processor in an object <code>{ip, acc}</code>, the core part of the problem fits nicely into the structure of a step function: <code>(state, instruction) =&gt; newState</code>.
+
+<details>
+  <summary>Expand Code</summary>
+
+  <code>js
+  const defaultStep = (state, [op, arg]) =&gt; {
+    if (op === &#39;nop&#39;) return {...state, ip: state.ip + 1}
+    if (op === &#39;acc&#39;) return {ip: state.ip + 1, acc: state.acc + arg}
+    if (op === &#39;jmp&#39;) return {...state, ip: state.ip + arg}
+  }</code>
+</details>
+<br />
+
+Given this representation of our state, our initial value will be <code>{ip: 0, acc: 0}</code>.
+
+Now let&#39;s implement each of our transformation steps as a transducer.
+
+<details>
+  <summary>1. Logging</summary>
+
+  <code>js
+const logging = step =&gt; (state, instruction) =&gt; {
+  console.log(&quot;State: &quot;, state);
+  return step(state, instruction);
+}</code>
+</details>
+
+<details>
+  <summary>2. Limiting</summary>
+
+  <code>js
+// an example of a stateful transducer
+const take10 = step =&gt; {
+  let count = 0;
+  return (state, instruction) =&gt; {
+    count += 1;
+    // early termination with reduced
+    // if our input were finite we could also just return state
+    // and eventually hit the end, but that doesn&#39;t work in
+    // this case
+    if (count &gt; 10) return reduced(state);
+    return step(state, instruction);
+  }
+}</code>
+</details>
+
+<p><details>
+  <summary>3. Loop Detection</summary></p>
+<pre><code class="lang-js">  const loopDetecting = step =&gt; {
+    const seen = new Set();
+    return (<span class="hljs-keyword">state</span>, instruction) =&gt; {
+      const hashedState = JSON.stringify(<span class="hljs-keyword">state</span>);
+      if (seen.has(hashedState)) return reduced(<span class="hljs-keyword">state</span>);
+      seen.add(hashedState);
+      return step(<span class="hljs-keyword">state</span>, instruction);
+    }
+  }
+</code></pre>
+<p></details>
+<br /></p>
+<p>The last parameter to identify is the input. This case is slightly tricky, we don&#39;t want to reduce directly over <code>instructions</code>, since we&#39;re not processing each instruction in order. We want to recreate the <code>while(true)</code> from our initial solution. We can do that efficiently with an infinite generator.</p>
+<pre><code class="lang-js"><span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-title">infiniteGenerator</span>(<span class="hljs-params"></span>) </span>{
+  <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) <span class="hljs-keyword">yield</span>
+}
+</code></pre>
+<p>since our input is now an infinite stream of <code>true</code>, we&#39;ll need one more transducer to actually get the instructions that will be fed into the transformation pipeline.</p>
+<pre><code class="lang-js">const instructionFeedFor = instructions =&gt; step =&gt; (<span class="hljs-keyword">state</span>, alwaysTrue) =&gt; {
+  if (<span class="hljs-keyword">state</span>.ip &gt; instructions.length) return reduced(<span class="hljs-keyword">state</span>);
+  return step(<span class="hljs-keyword">state</span>, instructions[<span class="hljs-keyword">state</span>.ip]);
+}
+</code></pre>
+<p><strong>note:</strong> this is technically cheating a little since we shouldn&#39;t know about the structure of the state in our transducer. There&#39;s probably a cleaner way to do it...</p>
+<p>Our final invocation then is:</p>
+<pre><code class="lang-js"><span class="hljs-keyword">const</span> transducer = compose(
+  instructionFeedFor(instructions),
+  take10,
+  loopDetecting,
+  logging
+);
+<span class="hljs-keyword">const</span> finalState = transduce(transducer, defaultStep, {ip: 0, acc: 0}, infiniteGenerator())
+console.log(<span class="hljs-string">"Final Accumulator Value: "</span>, finalState.acc);
+</code></pre>
+<p>This feels good! We can disable our debugging tools just by commenting out the relevant line of our transducer composition. If we want to run a version of our processor without loop detection it&#39;s similarly a one line change.</p>
+<h3 id="extension">Extension</h3>
+<p>This example problem was copied from <a href="https://adventofcode.com/2020/day/8">Day 8 of Advent of Code 2020</a>. Part 2 of the problem asks us to actually fix the loop and tells us we will be able to do so either by swapping one <code>jmp</code> operation for a <code>nop</code> or vice versa.</p>
+<p>Once you&#39;ve figured out an approach to a solution, how could you implement it using a transducer? (For an example solution you can check this <a href="https://gist.github.com/bhainesva/3b1078ad8e31cbbcd213a60b42839987">gist</a>).</p>
+<h2 id="summary">Summary</h2>
+<p>Transducers modify step (also called reducing) functions.</p>
+<p>Transducers allow us to think of transformation processes as a series of steps. We can compose these steps with each other in an efficient way, and their implementation does not depend on the source or sink of the process as a whole.</p>
+<p>We&#39;ve seen examples of using transducers for both finite and infinite processess, operating on arrays and generators.</p>
+<h2 id="notes">Notes</h2>
+<ul>
+<li><p>The definition of a transducer here is a simplification. Technically a transducer doesn&#39;t modify a step function, it modifies a &#39;transformer&#39; which is a set of three functions:</p>
+<ul>
+<li>a reducing function called <code>step</code></li>
+<li>an <code>init</code> function and a <code>result</code> function</li>
+</ul>
+<p>These other functions are mostly irrelevant, I don&#39;t know a case where the init function is even called. But if you&#39;re using a transducer implementation like ramda, you&#39;ll have to define your transducers to align with this structure (see the <a href="https://gist.github.com/bhainesva/3b1078ad8e31cbbcd213a60b42839987">gist</a> for an example, specifically the wrap function). By convention transformers are often called <code>xf</code>.</p>
+<p>In clojure a transformer is a single function with 3 arities.</p>
+</li>
+<li><p>The ordering of things can be unintuitive. <code>compose</code> traditionally does things right to left, but transducers work by wrapping themselves around an existing reducer. So in a composition of transducers the first listed transducer will happen first.</p>
+</li>
+<li><p>A nice thing about ramda is that many of its functions will automatically act as transducers in the appropriate context. This lets you do some things that would otherwise not seem to make sense, for example <code>R.transduce(R.compose(R.map(x =&gt; x+1), R.map(x =&gt; x+2)), (acc, x) =&gt; [...acc, x], [], [1, 2, 3])</code> will return <code>[4, 5, 6]</code> because <code>R.map</code> will contextually act as a transducer.</p>
+</li>
+</ul>
+<h2 id="references-">References:</h2>
+<ol>
+<li>This blog series is the explanation that made it click for me: <a href="https://simplectic.com/blog/2014/transducers-explained-1/">https://simplectic.com/blog/2014/transducers-explained-1/</a></li>
+<li>Another good blog post about them: <a href="https://jrsinclair.com/articles/2019/magical-mystical-js-transducers/">https://jrsinclair.com/articles/2019/magical-mystical-js-transducers/</a></li>
+<li>Rich Hickey&#39;s talk about transducers: <a href="https://www.youtube.com/watch?v=6mTbuzafcII">https://www.youtube.com/watch?v=6mTbuzafcII</a>, it&#39;s good but uses lisp syntax so it&#39;s a little hard to follow if you&#39;re not used to that</li>
+<li>Clojure&#39;s reference page on transducers: <a href="https://clojure.org/reference/transducers">https://clojure.org/reference/transducers</a></li>
+</ol>
