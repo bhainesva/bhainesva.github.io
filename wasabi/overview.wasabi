@@ -1,0 +1,227 @@
+/
+/.gitignore
+  Only contains 'en.po', I'm not sure why this file exists
+/README.md
+  Contains human readable information about the pages site.
+/config.test.yext.com.json
+  Config file for the site. There will be one of these files per domain.
+  Information about the file schema can be found here: https://www.yext.com/pagesadmin/gitconfig
+/desktop/
+  Contains the output build assets that are actually used when the site is published.
+/desktop/404.html
+  Default 404 page. I'm not sure if we need this file or what happens if we get rid of it.
+/desktop/500.html
+  See 404.html
+/desktop/BingSiteAuth.xml
+  Bing site verification file.
+/desktop/client/
+  This directory is for inputs that we want to omit from the standard build process. This is usually
+  things like client provided HTML sections or css where our build tools might cause unexpected problems.
+/desktop/googled2b2b0d496836f12.html
+  Google site verification file.
+/desktop/manifest.json
+  Contains version information about the components used in the site. This isn't actively used, and
+  I'm not sure it's intentional that it creates a publicly accessible page.
+/desktop/permanent-b0b701/
+  This folder holds the hashed assets. This specific folder name is important, it's hardcoded in the
+  sites directory code to know when it's appropriate to return year long cache control headers.
+/desktop/sslapproval
+  Template for emails to DigiCert. This looks like the remnant of an old process. At minimum, I
+  don't think it needs to live in the site.
+/messages/
+  This directory is initially empty. It's where .po file translations are stored for sites that
+  are multilang.
+/src/
+  Contains all of the 'inputs' to the build process. For the most part developers work entirely
+  within this folder. Config files are an exception.
+/src/.babelrc
+  Configuration for babel, part of the build chain.
+/src/.editorconfig
+  Configuration for developer experience tools. Used for standardizing file formatting, in practice
+  I don't think anyone actually uses the plugins necessary for this to work.
+/src/.generator-version
+  Contains meta information about when the site was generated. Useful for us for querying across
+  multiple repos to when fixing bugs that might affect multiple sites.
+/src/.gitignore
+  Actual project gitignore file, ignores mainly things that are created as a sideeffect of local dev
+  like caches, test artifacts, node_modules.
+/src/.jshintrc
+  Configuration for JSHint js linter. In theory would integrate with a grunt plugin or editor
+  plugins but we don't use the grunt plugin and I don't think most people have the editor plugin.
+/src/.node-version
+  Meta information file for development tool avn which switches to the appropriate node version when
+  you cd into the src directory.
+/src/.postcssrc.json
+  Config file for postcss, a tool we use for handling css as part of the core build chain.
+/src/.stylelintignore
+  Files to ignore when running stylelint. Mainly used to ignore the componentlib and answers files.
+  It's a dev tool.
+/src/.stylelintrc.json
+  Config for stylelint which runs as part of the build process but is a dev quality of life tool not
+  a core part of the build chain.
+/src/Gruntfile.js
+  Configure different grunt tasks like serving and building. Core part of the development experience
+  but infrequently modified.
+/src/assets/
+  Images, fonts, favicons
+/src/assets/fonts/
+/src/assets/images/
+/src/build.sh
+  Entry point to the build process. The idea is that this file would be the correct way to build any
+  given site. Tools can rely on this file existing and doing the right thing even if a particular
+  site requires something other than / additional to a standard `grunt build`.
+
+  In practice it isn't used by anything.
+/src/directory.cityList.json
+  Static data file used for development in non-proxy mode. Infrequently used, one file will exist
+  per feature type.
+/src/docker/
+  Contains the remnants of an experiment with building pages sites with docker. Can probably be
+  deleted.
+/src/entries.js
+  Core part of the webpack configuration. Is edited by developers when adding new entry points to a
+  site, such as a new entity type, or category pages.
+/src/favicon/
+  Sepcial directory, pngs here with the correct name (matching the domain of the site) will be
+  automatically processed into multiple different favicon and icon resolutions for different
+  platforms.
+/src/gruntTasks/
+  Directory for holding custom tasks used by grunt in the build/process phase.
+/src/gruntTasks/grunt-svg.js
+  Custom task to convert svgs into sprite sheets. Also generated some scss/soy to use the new sprite
+  sheet. However these assets are all gitignored, and they currently seem to be broken. I'm not sure
+  anyone has used this.
+/src/js/
+  You guessed it. It's the javascript. Contains folders for each entry point.
+/src/js/answers-script.js
+/src/js/brands/
+  There shouldn't actually be any files directly under this folder, they don't do anything. Each
+  distinct brand will have its own folder here where overrides can be provided for brand specific
+  behavior.
+/src/js/brands/primary/
+  This is the default brand. Additional brands are distinguished by domain.
+/src/js/common/
+  Contains Javascript that is not specific to a particular template.
+/src/js/common/global.js
+  This file contains javascript that is included by default on every page.
+/src/js/components/
+  Contains javascript for our pre-built library of components. These are rarely edited, and in most
+  sites, the majority of them are unused.
+/src/js/lib/
+  Placeholder directory for js libraries that are downloaded and manually included in the site.
+/src/package.json
+/src/pages.json
+  Configuration file for pager. Local development tool. We should be able to stop depending on it if
+  we aren't already.
+/src/sass/
+  Sass files. Similar organization structure to soy/js.
+/src/sass/common/
+/src/sass/common/base.scss
+  CSS reset to undo browser specific styling and start from a blank slate.
+/src/sass/common/fonts.scss
+  Configure font files for use in scss.
+/src/sass/common/layout.scss
+/src/sass/common/mixins.scss
+  File for scss mixins that are used throughout the stylesheets.
+/src/sass/common/module.scss
+/src/sass/common/modules/
+  These are default modules that we use on all sites.
+/src/sass/common/modules/Button.scss
+/src/sass/common/modules/Footer.scss
+/src/sass/common/modules/Header.scss
+/src/sass/common/modules/Heading.scss
+/src/sass/common/modules/Link.scss
+/src/sass/common/modules/Main.scss
+/src/sass/common/modules/ResultList.scss
+/src/sass/common/modules/Teaser.scss
+/src/sass/common/modules/Text.scss
+/src/sass/common/theme.scss
+/src/sass/common/variables.scss
+  SCSS variables that will be used throughout the site, specifically things like colors, fonts,
+  container sizes, and breakpoints.
+/src/sass/components/
+  scss for our default component library
+/src/sass/directory/
+  scss files included by default on the directory feature
+/src/sass/locationEntity/
+  scss files included by default on the entityPageset feature. The structure within this directory
+  is shared with the other feature directories.
+/src/sass/locationEntity/_default.scss
+  Main entry point, this file imports the other relevant scss files.
+/src/sass/locationEntity/components.scss
+  File containing imports for scss from our default component library. By default this file just has
+  a bunch of commented out lines. Developers uncomment lines for the particular components that they
+  would like to use.
+/src/sass/locationEntity/layout.scss
+  Empty file for holding layout level styling. In many cases this file remains empty.
+/src/sass/locationEntity/module.scss
+  File for importing scss for any new modules that are created during development.
+/src/sass/locationEntity/modules/
+  Folder for holding modules created during development that are used specifically on the entity
+  pages.
+/src/sass/locationEntity/theme.scss
+  File for holding generic styling that should apply to all entity pages but isn't specific to a
+  particular module.
+/src/sass/locationEntity/vendor.scss
+  File for including third party scss such as bootstrap, jqueryUI, or slick.
+/src/sass/search/
+  Search page styling.
+/src/scanDirs.js
+  This script runs after yarning, it creates the soydirectories.json file which indicates to our
+  build tools which files need to be processed to locate soy files.
+/src/soydirectories.json
+  File created by scanDirs.js, indicates to build tools which directories need to be scanned for soy
+  files when building the site.
+/src/templates/common/
+  Contains soy templates that are used across multiple features.
+/src/templates/common/favicons.soy
+/src/templates/common/helpers.soy
+/src/templates/common/include.soy
+/src/templates/common/layout.soy
+/src/templates/common/modules/
+/src/templates/common/modules/Footer.soy
+  Default footer implementation used as a starting point for new sites.
+/src/templates/common/modules/Header.soy
+  Default header implementation used as a starting point for new sites.
+/src/templates/common/modules/LocationName.soy
+  Template to render the name of an entity to ensure that styling / information is consistent
+  wherever it appears.
+/src/templates/common/modules/Teaser.soy
+  Default teaser used in nearby locations, locationlist directory pages, and and locator results.
+/src/templates/common/strings.soy
+  This file contains templates that render raw strings and is relied on by many of our default
+  components. This allows us to easily make text changes without needing to override components.
+/src/templates/components/
+  Soy files for our component library, these are included in every site by default so that it's
+  easy for developers to use them.
+/src/templates/directory/
+  Default templates for rendering directory pages. Includes logic for rendering the list of links on
+  each page.
+/src/templates/locationEntity/
+  Default entity page templates.
+/src/templates/search/
+  Default search page templates.
+/src/templates/static/robots.soy
+  Template for robots.txt file included on every site.
+/src/templates/url/
+/src/templates/url/url.soy
+  This file contains the url templates used for all features in the site's config as well as
+  anywhere that internal links are rendered on pages.
+/src/tests/
+  Contains a default setup for running unit and acceptance tests.
+/src/ts/
+  More components, these ones are written in Typescript instead of Javascript.
+/src/tsconfig.json
+  Configuration for typescript compilation. Used in build process.
+/src/validate-cfg.sh
+  Tool to locally validate a config file without publishing. Since we use sites-pager now this isn't
+  used in practice.
+/src/webpack/
+  Files related to configuring the build process.
+/src/yarn.lock
+  Lock file for dependency management.
+/templates/
+  Contains the compiled versions of soy templates. These are build artifacts and should never be
+  edited directly.
+/tests.groovy
+  This file configures tests that are run on PRs by Jenkins.
