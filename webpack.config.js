@@ -12,6 +12,8 @@ module.exports = {
     functional: './src/js/pages/functional.js',
     test: './src/js/pages/test.js',
     stereogram: './src/js/pages/stereogram.js',
+    encode: './src/js/pages/encode.js',
+    transducers: './src/js/pages/transducers.js',
   },
   devtool: 'inline-source-map',
   devServer: {
