@@ -1,3 +1,7 @@
+html {
+  visibility: visible;
+}
+
 .Interstitial
 {
   display: flex;
@@ -20,6 +24,11 @@
 .Interstitial--dragon
 {
   background-image: url("assets/dragon.jpg");
+}
+
+.Interstitial.is-hidden
+{
+  display: none;
 }
 
 .Interstitial.is-dismissed
