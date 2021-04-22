@@ -136,7 +136,7 @@ Each instruction consists of an operation (`acc, jmp, or nop`) and a numeric arg
 - jmp jumps to a new instruction relative to itself. The next instruction to execute is found using the argument as an offset from the jmp instruction; for example, jmp +2 would skip the next instruction, jmp +1 would continue to the instruction immediately below it, and jmp -20 would cause the instruction 20 lines above to be executed next.
 - nop stands for No OPeration - it does nothing. The instruction immediately below it is executed next.
 
-This particular set of instructions produces an infinite loop when executed. Our goal is to write a program that can execute these instructions and can also detect infinite loops. We should halt execution and output the value of the accumulator before any instruction is executed for a second time (indicated the start of loop).
+This particular set of instructions produces an infinite loop when executed. Our goal is to write a program that can execute these instructions and can also detect infinite loops. We should halt execution and output the value of the accumulator before any instruction is executed for a second time (indicating the start of a loop).
 
 Our program will have an instruction pointer (`ip`) variable for keeping track of the index of the instruction to be executed and an accumulator variable `acc`.
 
@@ -166,6 +166,7 @@ function findLoop(instructions) {
 
     if (ip > instructions.length) {
       console.log("terminated normally!");
+      return
     }
 
     const [op, arg] = instructions[ip];
@@ -225,10 +226,10 @@ Now let's implement each of our transformation steps as a transducer.
   <summary>1. Logging</summary>
 
   ```js
-const logging = step => (state, instruction) => {
-  console.log("State: ", state);
-  return step(state, instruction);
-}
+  const logging = step => (state, instruction) => {
+    console.log("State: ", state);
+    return step(state, instruction);
+  }
   ```
 </details>
 
@@ -236,19 +237,19 @@ const logging = step => (state, instruction) => {
   <summary>2. Limiting</summary>
 
   ```js
-// an example of a stateful transducer
-const take10 = step => {
-  let count = 0;
-  return (state, instruction) => {
-    count += 1;
-    // early termination with reduced
-    // if our input were finite we could also just return state
-    // and eventually hit the end, but that doesn't work in
-    // this case
-    if (count > 10) return reduced(state);
-    return step(state, instruction);
+  // an example of a stateful transducer
+  const take10 = step => {
+    let count = 0;
+    return (state, instruction) => {
+      count += 1;
+      // early termination with reduced
+      // if our input were finite we could also just return state
+      // and eventually hit the end, but that doesn't work in
+      // this case
+      if (count > 10) return reduced(state);
+      return step(state, instruction);
+    }
   }
-}
   ```
 </details>
 
