@@ -40,7 +40,16 @@ module.exports = {
       },
       {
         test: /\.(html)$/,
-        use: ['file-loader?name=[name].[ext]', 'extract-loader', 'html-loader'],
+        use: [
+          "file-loader?name=[name].[ext]",
+          {
+            loader: "extract-loader",
+            options: {
+              publicPath: "",
+            }
+          },
+          "html-loader",
+        ]
       },
       {
         test: /\.(png|svg|jpg|gif)$/,
