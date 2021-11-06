@@ -2,7 +2,7 @@
 
 ## Overview
 We will look at how we can abstract transformation processes using transducers.
-It will cover what transducers are, their motivation, and their application in an example case.
+We will cover what transducers are, their motivation, and their application in an example case.
 
 ### Pre-requisites
 Familiarity with the concept of higher order functions, function composition, map/filter/reduce.
