@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Quotle</title>
+    <meta charset="UTF-8" />
+  </head>
+
+  <body>
+    Quote
+    <br /><br />
+    <div id="app" style="font-size:38px;letter-spacing:8px;word-spacing:18px;font-family:monospace">
+    </div>
+    <br />
+    <div id="author"></div>
+    <br /><br />
+    <form id="form" action="">
+      Guess a word: <input id="input" type="text"></input>
+    </form>
+    <br /><br />
+    Guessed: 
+    <div id="used"></div>
+    <br /><br />
+    <button id="answer">
+      Show Answer
+    </button>
+
+
+    <script>
+      const div = document.querySelector('#app');
+      const form = document.querySelector('#form');
+      const used = document.querySelector('#used');
+      const input = document.querySelector('#input');
+      const answer = document.querySelector('#answer');
+
+      const guesses = new Set();
+
+      const getContent = (quote, guesses) => {
+          const q = quote.content.split(' ');
+          const obscured = q.map(word => {
+            if (guesses.has(word.toLowerCase().replace(/[,.!?;\-:"\']/g, ''))) return word;
+            if (word.length <= 3) return word;
+            return word.replace(/[^aei\-ou,.!?;:"'\']/g, '_')
+          })
+          return obscured.join('\t');
+      }
+
+
+      fetch('https://api.quotable.io/random')
+        .then(r => r.json())
+        .then(quote => {
+          form.addEventListener('submit', (e) => {
+            console.log("Submitting: ", e.target)
+            e.preventDefault();
+            const guess = input.value.toLowerCase().replace(/[,.!\-?;:"\']/, '');
+            guesses.add(guess);
+            input.value = '';
+            div.innerText = getContent(quote, guesses);
+            used.innerText = [...guesses].join(", ");
+          })
+
+          answer.addEventListener('click', (e) => {
+            div.innerText = quote.content;
+          });
+
+          console.log(quote);
+          const qad = {
+  "_id": "vTak3m-m9hN5",
+  "tags": [
+    "famous-quotes"
+  ],
+  "content": "Practice yourself, for heaven's sake in little things, and then proceed to greater.",
+  "author": "Epictetus",
+  "authorSlug": "epictetus",
+  "length": 83,
+  "dateAdded": "2019-06-27",
+  "dateModified": "2022-01-07"
+};
+          div.innerText = getContent(quote, guesses);
+          author.innerText = `- ${quote.author}`;
+          input.focus();
+        });
+    </script>
+  </body>
+</html>
