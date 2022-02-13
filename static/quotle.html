@@ -5,6 +5,20 @@
     <meta charset="UTF-8" />
   </head>
 
+  <style>
+    #toast {
+      position: absolute;
+      font-size: 24px;
+      left: 50%;
+      top: 30%;
+      padding: 30px;
+      display: none;
+    }
+
+    #toast.green {display: block;background-color: rgb(120, 230, 120)}
+    #toast.red {display: block;background-color: rgb(244, 89, 77)}
+  </style>
+
   <body>
     Quote
     <br /><br />
@@ -19,6 +33,7 @@
     <br /><br />
     Guessed: 
     <div id="used"></div>
+    <div id="toast"></div>
     <br /><br />
     <button id="answer">
       Show Answer
@@ -31,8 +46,26 @@
       const used = document.querySelector('#used');
       const input = document.querySelector('#input');
       const answer = document.querySelector('#answer');
+      const toast = document.querySelector('#toast');
+
 
       const guesses = new Set();
+
+      const sendToast = (msg, color) => {
+        toast.innerText = msg;
+        toast.classList.add(color);
+        setTimeout(() => {
+          toast.innerText = '';
+          toast.classList.remove(color);
+        }, 1500)
+      }
+
+      const clean = word => word.toLowerCase().replace(/[,.!?;\-:"\']/g, '')
+
+      const cleanedQuoteWords = quote => {
+          const q = quote.content.split(' ');
+          return q.map(clean) 
+      }
 
       const getContent = (quote, guesses) => {
           const q = quote.content.split(' ');
@@ -44,14 +77,23 @@
           return obscured.join('\t');
       }
 
+      const goodGuess = (quote, guess) => {
+        	if (cleanedQuoteWords(quote).includes(guess)) return true;
+      }
 
       fetch('https://api.quotable.io/random')
         .then(r => r.json())
         .then(quote => {
           form.addEventListener('submit', (e) => {
-            console.log("Submitting: ", e.target)
             e.preventDefault();
-            const guess = input.value.toLowerCase().replace(/[,.!\-?;:"\']/, '');
+            const guess = clean(input.value)
+            if (!guesses.has(guess)) {
+              if (goodGuess(quote, guess)) {
+                sendToast("BINGO!!!!", "green")
+              } else {
+                sendToast("WRONG! DUMMY!", "red")
+              }
+            }
             guesses.add(guess);
             input.value = '';
             div.innerText = getContent(quote, guesses);
