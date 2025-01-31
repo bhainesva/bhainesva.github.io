@@ -67,7 +67,7 @@ const getMappingTransformation = f => step => (result, item) => {
 }
 ```
 
-The result of calling `getMappingTransformation` with a specific mapping function, for example `getMappingTransformation(x => x * x)` is a new function which takes a step function as input and produces a modified step function as output. This type of function is called a transducer, and is our unit of transformation. Transducers modify step/reducing functions. Transducers avoid directly knowledge of `result` by deferring to their step function parameter, and because their inputs and outputs have the same type (a step function), they're directly composable.
+The result of calling `getMappingTransformation` with a specific mapping function, for example `getMappingTransformation(x => x * x)` is a new function which takes a step function as input and produces a modified step function as output. This type of function is called a transducer, and is our unit of transformation. Transducers modify step/reducing functions. Transducers avoid direct knowledge of `result` by deferring to their step function parameter, and because their inputs and outputs have the same type (a step function), they're directly composable.
 
 For completeness, we can do the same thing with `filter`
 ```js
