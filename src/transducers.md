@@ -36,7 +36,7 @@ Given these flaws, we can describe properties of a solution we're looking for. W
 
 ## Part 2: Solution
 
-As mentioned above, the generalization of the type of step based transformations we're looking at is `reduce`. `reduce` takes an input source, a 'step' function, and an initial value. The step function takes a result, an item from the input, and produces a new result. `reduce` repeatedly calls the step function using an item from the input and the result of the previous step (or the initial value for the first invokation).
+As mentioned above, the generalization of the type of step based transformations we're looking at is `reduce`. `reduce` takes an input source, a 'step' function, and an initial value. The step function takes a result, an item from the input, and produces a new result. `reduce` repeatedly calls the step function using an item from the input and the result of the previous step (or the initial value for the first invocation).
 
 
 We can implement `map` and `filter` using reduce:
