@@ -1,0 +1,8 @@
+.char {
+    border: 1px solid black;
+}
+
+.col {
+    display: flex;
+    flex-direction: column;
+}
