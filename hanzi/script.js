@@ -752,17 +752,53 @@ const hsk1Chars = [
 ];
 
 
-console.log("hello")
-console.log(document.querySelector('#character-target-div'))
+const storage = localStorage.getItem('bhaines.dev-hanzi-enabled') ?? '';
+let enabled = storage ? new Set(storage.split(',').map(Number)) : new Set();
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
 }
 
+const getRandomItem = set => [...set][Math.floor(Math.random()*set.size)]
+
 const target1 = document.querySelector('#character-target-div');
 const target2 = document.querySelector('#character-target-div-2');
+const target3 = document.querySelector('#character-target-div-3');
+const modal = document.querySelector('#modal');
+const modalContent = document.querySelector('#modal-content');
+const close = document.querySelector('#close');
 
-const writer = HanziWriter.create('character-target-div', "爱", {
+  console.log("enabled: ", enabled, storage)
+
+const els = [];
+for (const [i, word] of hsk1Chars.entries()) {
+  const div = document.createElement('div')
+  const label = document.createElement('label')
+  const inp = document.createElement('input')
+  inp.setAttribute('type', 'checkbox')
+  inp.setAttribute('name', word[0]);
+  label.append(inp);
+  label.append(`${word[0]} - ${word[1]} - ${word[2]}`);
+
+  if (enabled.has(i)){
+    inp.setAttribute('checked', true)
+  }
+
+  inp.addEventListener('change', (e) => {
+    const checked = e.target.checked;
+    if (checked) {
+      enabled.add(i)
+    } else {
+      enabled.delete(i);
+    }
+  })
+  div.append(label)
+  els.push(div)
+}
+
+modalContent.append(...els);
+
+const writer = HanziWriter.create('character-target-div-1', "我", {
     width: 300,
     height: 300,
     padding: 3,
@@ -770,23 +806,38 @@ const writer = HanziWriter.create('character-target-div', "爱", {
     showOutline: true,
 });
 
-const writer2 = HanziWriter.create('character-target-div-2', "你", {
+const writer2 = HanziWriter.create('character-target-div-2', "爱", {
     width: 300,
     height: 300,
     padding: 3,
     showCharacter: true,
     showOutline: true,
 });
+
+const writer3 = HanziWriter.create('character-target-div-3', "你", {
+    width: 300,
+    height: 300,
+    padding: 3,
+    showCharacter: true,
+    showOutline: true,
+});
+
+const onSettings = () => {
+  modal.style.display = 'flex';
+}
+
+const onClose = () => {
+  modal.style.display = 'none';
+  localStorage.setItem('bhaines.dev-hanzi-enabled', [...enabled].join(','))
+}
 
 const onRandom = () => {
-    const idx = getRandomInt(hsk1Chars.length);
+    const idx = getRandomItem(enabled);
     const info = hsk1Chars[idx];
     const pinyin = document.querySelector('#pinyin')
     const definition = document.querySelector('#definition')
 
     const chars = info[0].split("");
-    console.log("chars", info[0], chars)
-
 
     writer.hideCharacter();
     writer.hideOutline()
@@ -795,15 +846,33 @@ const onRandom = () => {
     definition.innerText = info[2];
     writer.quiz();
 
+    console.log("LENGHT: ", chars.length)
+
     if (chars.length > 1) {
-        target2.style.display = 'block';
+        target2.style.display = 'flex';
         writer2.hideCharacter();
         writer2.hideOutline();
+        writer2.setCharacter(chars[1]);
         writer2.quiz();
     } else {
+      console.log("hiding 2")
         target2.style.display = 'none';
+    }
+
+    if (chars.length > 2) {
+        target3.style.display = 'flex';
+        writer3.hideCharacter();
+        writer3.hideOutline();
+        writer3.setCharacter(chars[2]);
+        writer3.quiz();
+    } else {
+      console.log("hiding 3")
+        target3.style.display = 'none';
     }
 }
 
 document.querySelector('#random').addEventListener('click', onRandom);
-      
+document.querySelector('#settings').addEventListener('click', onSettings);
+document.querySelector('#close').addEventListener('click', onClose);
+
+     

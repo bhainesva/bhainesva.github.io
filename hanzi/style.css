@@ -1,8 +1,29 @@
+* {
+    box-sizing: border-box;
+}
+
 .char {
     border: 1px solid black;
 }
 
 .col {
+    display: flex;
+    flex-direction: column;
+}
+
+#modal {
+    display: none;
+    position: fixed;
+    background: white;
+    flex-direction: column;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+#modal-content {
+    overflow-y: scroll;
     display: flex;
     flex-direction: column;
 }
